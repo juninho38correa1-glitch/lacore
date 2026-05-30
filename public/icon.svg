@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#080A0F"/>
+  <rect width="512" height="512" rx="112" fill="url(#grad)"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#1a1f2e"/>
+      <stop offset="100%" stop-color="#080A0F"/>
+    </linearGradient>
+  </defs>
+  <!-- Logo L + C da LACORE -->
+  <path d="M96 96 L96 360 L260 360" stroke="white" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95"/>
+  <path d="M300 96 C300 96 416 96 416 228 C416 340 336 360 336 360" stroke="#3B82F6" stroke-width="56" stroke-linecap="round" fill="none"/>
+  <!-- Glow sob a logo -->
+  <ellipse cx="256" cy="420" rx="120" ry="12" fill="#3B82F6" opacity="0.25"/>
+</svg>
