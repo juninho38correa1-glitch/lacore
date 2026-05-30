@@ -90,7 +90,7 @@ export default function CatalogoPage() {
       const parc = calcParcela(prod.price_current || 0, 12)
       msg = `Olá! Vi o *${prod.brand} ${prod.model}${prod.storage ? ` ${prod.storage}` : ''}${prod.color ? ` — ${prod.color}` : ''}* no catálogo da LACORE Store por *${preco}* à vista (ou ${fR(parc.parcela)}/mês em até 12x) e tenho interesse! Ainda está disponível?`
     } else {
-      msg = `Olá! Acessei o catálogo da LACORE Store e gostaria de saber mais sobre os produtos disponíveis.`
+      msg = `Olá! Gostaria de conhecer os produtos da LACORE Store. Pode me ajudar? 😊`
     }
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank')
   }
