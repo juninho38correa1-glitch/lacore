@@ -1,15 +1,19 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff } from 'lucide-react'
-import { callFn } from '@/lib/supabase'
+import { useState, useEffect, useRef } from 'react'
+import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff, ImagePlus, Loader2, Store } from 'lucide-react'
+import { callFn, sb } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
 import { useRouter } from 'next/navigation'
+import { LogoIcon } from '@/lib/useLogo'
 
 
 export default function ConfiguracoesPage() {
   const { user, isAdmin } = useAuth()
   const router = useRouter()
+  const logoRef = useRef<HTMLInputElement>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
   const [notifPerm, setNotifPerm] = useState<NotificationPermission>('default')
   const [openaiKey, setOpenaiKey] = useState('')
   const [manusKey, setManusKey] = useState('')
@@ -23,7 +27,34 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     if (typeof Notification !== 'undefined') setNotifPerm(Notification.permission)
+    sb.from('system_config').select('value').eq('key', 'company_logo').single()
+      .then(({ data }) => { if (data?.value) setLogoUrl(data.value) })
   }, [])
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return
+    setLogoUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const key = `company_logo.${ext}`
+      await sb.storage.from('avatars').remove([key])
+      const { error } = await sb.storage.from('avatars').upload(key, file, { upsert: true })
+      if (error) throw error
+      const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(key)
+      const urlWithBust = publicUrl + '?t=' + Date.now()
+      await sb.from('system_config').upsert({ key: 'company_logo', value: urlWithBust, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      setLogoUrl(urlWithBust)
+      toast('Logo atualizada com sucesso!', 'success')
+    } catch { toast('Erro ao fazer upload da logo', 'error') }
+    finally { setLogoUploading(false); if (logoRef.current) logoRef.current.value = '' }
+  }
+
+  const handleLogoRemove = async () => {
+    if (!confirm('Restaurar logo padrão (LC)?')) return
+    await sb.from('system_config').delete().eq('key', 'company_logo')
+    setLogoUrl(null)
+    toast('Logo restaurada para o padrão', 'info')
+  }
 
   const requestNotifPermission = async () => {
     if (typeof Notification === 'undefined') { toast('Notificações não suportadas neste navegador', 'error'); return }
@@ -117,6 +148,38 @@ export default function ConfiguracoesPage() {
         <button onClick={saveKeys} disabled={saving} className="btn-primary w-full py-2.5 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50">
           {saving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Salvando...</> : <><Save size={14} />Salvar Chaves</>}
         </button>
+      </div>
+
+      {/* Logo da empresa */}
+      <div className="card space-y-4">
+        <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Store size={15} className="text-blue-400" />Logo da Empresa</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ flexShrink: 0 }}>
+            <LogoIcon size={56} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <p className="text-xs text-gray-400 mb-3">A logo aparece na sidebar e na página de login. Formatos aceitos: PNG, JPG, SVG.</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => logoRef.current?.click()}
+                disabled={logoUploading}
+                className="btn-primary text-xs px-3 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+              >
+                {logoUploading ? <Loader2 size={12} style={{ animation: 'spin .6s linear infinite' }} /> : <ImagePlus size={12} />}
+                {logoUploading ? 'Enviando...' : 'Alterar logo'}
+              </button>
+              {logoUrl && (
+                <button
+                  onClick={handleLogoRemove}
+                  className="text-xs px-3 py-2 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 size={11} />Restaurar padrão
+                </button>
+              )}
+            </div>
+            <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+          </div>
+        </div>
       </div>
 
       {/* Notificações push */}
