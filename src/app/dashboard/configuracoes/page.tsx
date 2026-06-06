@@ -143,6 +143,19 @@ export default function ConfiguracoesPage() {
             <span className="text-[11px] text-gray-500">Ative nas configurações do navegador</span>
           )}
         </div>
+        {notifPerm === 'granted' && (
+          <button
+            onClick={() => new Notification('Lacore Store — Teste ✅', {
+              body: 'Notificações funcionando corretamente!',
+              icon: '/favicon.png',
+              tag: 'lacore-teste',
+            })}
+            className="text-xs flex items-center gap-2 px-3 py-2 rounded-lg border border-yellow-500/20 bg-yellow-500/8 text-yellow-300 hover:bg-yellow-500/15 transition-colors cursor-pointer w-full justify-center"
+            style={{ fontFamily: 'var(--font)', fontWeight: 500 }}
+          >
+            <Bell size={12} />Enviar notificação de teste
+          </button>
+        )}
       </div>
 
       {/* Info segurança */}
