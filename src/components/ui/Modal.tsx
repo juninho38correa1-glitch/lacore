@@ -36,10 +36,9 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
         backdropFilter: 'blur(8px)',
         zIndex: 50,
         display: 'flex',
-        alignItems: 'flex-end',  /* mobile: bottom sheet */
-        justifyContent: 'center',
-        /* safe-area no overlay garante que flex-end já posicione acima da barra home */
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        flexDirection: 'column',
+        justifyContent: 'flex-end', /* bottom sheet */
+        alignItems: 'center',
         overflowY: 'auto',
       }}
     >
@@ -51,11 +50,14 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
           maxWidth: WIDTHS[size],
           background: 'var(--bg-1)',
           border: '1px solid var(--border-2)',
-          borderRadius: '20px 20px 0 0',  /* mobile: bottom sheet */
+          borderRadius: '20px 20px 0 0',
           boxShadow: '0 -8px 48px rgba(0,0,0,.5)',
           maxHeight: '88dvh',
           overflowY: 'auto',
           overflowX: 'hidden',
+          /* sobe acima da barra home do iPhone */
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          marginTop: 'auto',
         }}
       >
         {/* Drag handle — mobile */}

@@ -344,8 +344,8 @@ input[type="checkbox"]:checked::after {
   box-shadow: var(--shadow-sm);
   position: relative;
 }
-table { min-width: 480px; width: 100%; border-collapse: collapse; }
-thead { border-bottom: 1px solid var(--border-1); }
+table { min-width: 480px; width: 100%; border-collapse: collapse; background: var(--bg-1); }
+thead { border-bottom: 1px solid var(--border-1); background: var(--bg-1); }
 th {
   padding: 9px 13px 8px;
   font-family: var(--font);
@@ -353,7 +353,9 @@ th {
   letter-spacing: .08em; color: var(--text-4); text-align: left;
   white-space: nowrap; background: rgba(255,255,255,.015);
 }
-td { padding: 10px 13px; font-size: 12.5px; border-bottom: 1px solid var(--border-1); vertical-align: middle; }
+/* background explícito nas células evita que o fundo preto da página
+   apareça nas bordas arredondadas do container ao rolar no mobile */
+td { padding: 10px 13px; font-size: 12.5px; border-bottom: 1px solid var(--border-1); vertical-align: middle; background: var(--bg-1); }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr { transition: background .12s; cursor: default; }
 tbody tr:hover td { background: rgba(59,130,246,.04) !important; }
