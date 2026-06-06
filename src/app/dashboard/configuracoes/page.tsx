@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff, ImagePlus, Loader2, Store } from 'lucide-react'
+import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff, ImagePlus, Loader2, Store, ChevronDown } from 'lucide-react'
 import { callFn, sb } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
@@ -22,6 +22,7 @@ export default function ConfiguracoesPage() {
   const [status, setStatus] = useState<Record<string, boolean> | null>(null)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [keysOpen, setKeysOpen] = useState(false)
 
   useEffect(() => { if (!isAdmin()) router.push('/dashboard') }, [isAdmin])
 
@@ -125,29 +126,40 @@ export default function ConfiguracoesPage() {
       </div>
 
       {/* Configurar chaves */}
-      <div className="card space-y-4">
-        <h2 className="text-sm font-semibold text-white mb-1">Configurar Chaves de API</h2>
-        <p className="text-xs text-gray-500">As chaves são armazenadas com segurança no servidor via Edge Function. Nunca expostas no frontend.</p>
-        {keys.map(k => (
-          <div key={k.id}>
-            <label className="text-xs text-gray-400 mb-1.5 block font-medium">{k.label}</label>
-            <div className="relative">
-              <input
-                type={showKeys[k.id] ? 'text' : 'password'}
-                value={k.value}
-                onChange={e => k.set(e.target.value)}
-                placeholder={k.placeholder}
-                className="text-sm pr-10 font-mono"
-              />
-              <button onClick={() => setShowKeys(s => ({ ...s, [k.id]: !s[k.id] }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
-                {showKeys[k.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-            </div>
-          </div>
-        ))}
-        <button onClick={saveKeys} disabled={saving} className="btn-primary w-full py-2.5 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-          {saving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Salvando...</> : <><Save size={14} />Salvar Chaves</>}
+      <div className="card">
+        <button
+          onClick={() => setKeysOpen(v => !v)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <h2 className="text-sm font-semibold text-white">Configurar Chaves de API</h2>
+          <ChevronDown size={16} style={{ color: 'var(--text-3)', transition: 'transform .2s', transform: keysOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
         </button>
+
+        {keysOpen && (
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p className="text-xs text-gray-500">As chaves são armazenadas com segurança no servidor via Edge Function. Nunca expostas no frontend.</p>
+            {keys.map(k => (
+              <div key={k.id}>
+                <label className="text-xs text-gray-400 mb-1.5 block font-medium">{k.label}</label>
+                <div className="relative">
+                  <input
+                    type={showKeys[k.id] ? 'text' : 'password'}
+                    value={k.value}
+                    onChange={e => k.set(e.target.value)}
+                    placeholder={k.placeholder}
+                    className="text-sm pr-10 font-mono"
+                  />
+                  <button onClick={() => setShowKeys(s => ({ ...s, [k.id]: !s[k.id] }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                    {showKeys[k.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button onClick={saveKeys} disabled={saving} className="btn-primary w-full py-2.5 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+              {saving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Salvando...</> : <><Save size={14} />Salvar Chaves</>}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Logo da empresa */}
