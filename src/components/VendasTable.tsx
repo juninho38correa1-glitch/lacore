@@ -431,7 +431,8 @@ export default function VendasTable() {
   @media print{
     @page{size:A4 portrait;margin:6mm 8mm}
     .print-bar,.print-fab{display:none!important}
-    body{background:#fff;padding:0;display:block}
+    /* min-height:100vh no body era o culpado das 2 páginas — no print vira 0 */
+    body{background:#fff!important;padding:0!important;display:block!important;min-height:0!important;height:auto!important;align-items:unset!important}
     .doc{border-radius:0;box-shadow:none;max-width:100%;width:100%}
     .doc-header{padding:16px 20px 14px}
     .header-ref{font-size:20px}
