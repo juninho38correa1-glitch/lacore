@@ -55,13 +55,13 @@ export default function Sidebar() {
 
         {/* Logo */}
         <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--border-1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <LogoIcon size={34} />
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--text-1)', fontFamily: 'var(--font-head)' }}>LACORE</p>
               <p style={{ fontSize: 9.5, color: 'var(--text-4)', letterSpacing: '0.06em', marginTop: 1 }}>Lacore Store | Premium Tech</p>
             </div>
-          </div>
+          </Link>
         </div>
 
 
