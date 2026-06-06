@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield } from 'lucide-react'
+import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff } from 'lucide-react'
 import { callFn } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 export default function ConfiguracoesPage() {
   const { user, isAdmin } = useAuth()
   const router = useRouter()
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission>('default')
   const [openaiKey, setOpenaiKey] = useState('')
   const [manusKey, setManusKey] = useState('')
   const [geminiKey, setGeminiKey] = useState('')
@@ -19,6 +20,22 @@ export default function ConfiguracoesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { if (!isAdmin()) router.push('/dashboard') }, [isAdmin])
+
+  useEffect(() => {
+    if (typeof Notification !== 'undefined') setNotifPerm(Notification.permission)
+  }, [])
+
+  const requestNotifPermission = async () => {
+    if (typeof Notification === 'undefined') { toast('Notificações não suportadas neste navegador', 'error'); return }
+    const perm = await Notification.requestPermission()
+    setNotifPerm(perm)
+    if (perm === 'granted') {
+      new Notification('Lacore Store', { body: 'Notificações ativadas! Você será avisado sobre parcelas.', icon: '/favicon.png' })
+      toast('Notificações ativadas com sucesso!', 'success')
+    } else {
+      toast('Permissão negada. Ative nas configurações do navegador.', 'error')
+    }
+  }
 
   const loadStatus = async () => {
     setLoading(true)
@@ -100,6 +117,32 @@ export default function ConfiguracoesPage() {
         <button onClick={saveKeys} disabled={saving} className="btn-primary w-full py-2.5 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50">
           {saving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Salvando...</> : <><Save size={14} />Salvar Chaves</>}
         </button>
+      </div>
+
+      {/* Notificações push */}
+      <div className="card space-y-3">
+        <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Bell size={15} className="text-yellow-400" />Notificações de Parcelas</h2>
+        <p className="text-xs text-gray-500">Receba alertas do browser quando houver parcelas vencidas ou vencendo hoje. Funciona enquanto o app estiver aberto ou em segundo plano.</p>
+        <div className={`flex items-center justify-between p-3 rounded-lg border ${notifPerm === 'granted' ? 'bg-green-500/8 border-green-500/20' : notifPerm === 'denied' ? 'bg-red-500/8 border-red-500/20' : 'bg-white/3 border-white/8'}`}>
+          <div className="flex items-center gap-2">
+            {notifPerm === 'granted'
+              ? <><CheckCircle size={14} className="text-green-400" /><span className="text-xs font-semibold text-green-300">Notificações ativas</span></>
+              : notifPerm === 'denied'
+              ? <><BellOff size={14} className="text-red-400" /><span className="text-xs font-semibold text-red-300">Bloqueadas pelo navegador</span></>
+              : <><Bell size={14} className="text-gray-500" /><span className="text-xs text-gray-400">Não configurado</span></>}
+          </div>
+          {notifPerm !== 'granted' && notifPerm !== 'denied' && (
+            <button
+              onClick={requestNotifPermission}
+              className="btn-primary text-xs px-3 py-1.5 rounded-lg"
+            >
+              Ativar alertas
+            </button>
+          )}
+          {notifPerm === 'denied' && (
+            <span className="text-[11px] text-gray-500">Ative nas configurações do navegador</span>
+          )}
+        </div>
       </div>
 
       {/* Info segurança */}

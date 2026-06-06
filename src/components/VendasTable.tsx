@@ -546,8 +546,8 @@ export default function VendasTable() {
       <div class="garantia-box">
         <div class="garantia-icon">🛡️</div>
         <div>
-          <div class="garantia-title">Garantia do Produto</div>
-          <div class="garantia-text">Este produto possui <strong>3 meses de garantia</strong> contra defeitos de fabricação. Em caso de problemas, entre em contato imediatamente.<br>Produtos com danos físicos, líquido ou violação não são cobertos.</div>
+          <div class="garantia-title">Garantia contra Defeito de Fábrica — 30 dias</div>
+          <div class="garantia-text">Este produto possui <strong>30 dias de garantia</strong> contra defeitos de fabricação comprovados. Não nos responsabilizamos por danos decorrentes de mau uso, quedas, contato com líquidos, violação do produto ou qualquer avaria de origem externa.<br><br>Todo acionamento de garantia passará por <strong>análise técnica</strong> para verificação e confirmação da legitimidade do defeito antes de qualquer providência.</div>
         </div>
       </div>
 

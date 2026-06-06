@@ -336,7 +336,7 @@ input[type="checkbox"]:checked::after {
 ══════════════════════════════ */
 .table-wrap {
   background: var(--bg-1); border: 1px solid var(--border-1);
-  border-radius: var(--r-lg); overflow: hidden;
+  border-radius: var(--r-lg);
   overflow-x: auto; -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-sm);
   position: relative;

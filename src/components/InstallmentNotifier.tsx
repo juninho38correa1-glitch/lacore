@@ -206,19 +206,6 @@ export default function InstallmentNotifier() {
 
       {/* Footer */}
       <div style={{ display: 'flex', gap: 8, padding: '10px 14px', alignItems: 'center' }}>
-        {notifPerm === 'default' && (
-          <button
-            onClick={requestNotifPermission}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 7, background: 'rgba(59,130,246,.1)', border: '1px solid rgba(59,130,246,.2)', color: 'var(--accent)', fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font)' }}
-          >
-            <Bell size={11} />Ativar alertas
-          </button>
-        )}
-        {notifPerm === 'granted' && (
-          <span style={{ fontSize: 10.5, color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Bell size={10} />Alertas ativos
-          </span>
-        )}
         <button
           onClick={() => { router.push('/dashboard/fluxo-caixa?tab=areceber'); setVisible(false) }}
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, background: 'var(--bg-3)', border: '1px solid var(--border-1)', color: 'var(--text-2)', fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font)' }}

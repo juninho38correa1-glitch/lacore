@@ -38,6 +38,7 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
         display: 'flex',
         alignItems: 'flex-end',  /* mobile: bottom sheet */
         justifyContent: 'center',
+        paddingTop: '8vh',       /* espaço acima para não colar no topo */
         overflowY: 'auto',
       }}
     >
@@ -51,9 +52,10 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
           border: '1px solid var(--border-2)',
           borderRadius: '20px 20px 0 0',  /* mobile: bottom sheet */
           boxShadow: '0 -8px 48px rgba(0,0,0,.5)',
-          maxHeight: '92dvh',
+          maxHeight: '88dvh',
           overflowY: 'auto',
           overflowX: 'hidden',
+          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         }}
       >
         {/* Drag handle — mobile */}
