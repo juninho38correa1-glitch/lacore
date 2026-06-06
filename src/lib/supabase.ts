@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-export const SB_URL    = process.env.NEXT_PUBLIC_SB_URL!
-export const SB_KEY    = process.env.NEXT_PUBLIC_SB_KEY!
-export const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || ''
+export const SB_URL    = 'https://ritvdomqjwodevyhpqox.supabase.co'
+export const SB_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdHZkb21xandvZGV2eWhwcW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1ODcwMjcsImV4cCI6MjA5NTE2MzAyN30.eIS813sjVWvQihse4_uN5rnogEf7a_ghrynkoz5WePI'
+export const WA_NUMBER = '5544997230700'
 
 export const sb = createClient(SB_URL, SB_KEY)
 
