@@ -338,6 +338,9 @@ input[type="checkbox"]:checked::after {
   background: var(--bg-1); border: 1px solid var(--border-1);
   border-radius: var(--r-lg);
   overflow-x: auto; -webkit-overflow-scrolling: touch;
+  /* impede que o swipe horizontal na tabela propague para a página */
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
   box-shadow: var(--shadow-sm);
   position: relative;
 }

@@ -38,7 +38,8 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
         display: 'flex',
         alignItems: 'flex-end',  /* mobile: bottom sheet */
         justifyContent: 'center',
-        paddingTop: '8vh',       /* espaço acima para não colar no topo */
+        /* safe-area no overlay garante que flex-end já posicione acima da barra home */
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         overflowY: 'auto',
       }}
     >
@@ -55,7 +56,6 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
           maxHeight: '88dvh',
           overflowY: 'auto',
           overflowX: 'hidden',
-          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         }}
       >
         {/* Drag handle — mobile */}
