@@ -428,7 +428,25 @@ export default function VendasTable() {
   .btn-print{background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px}
   .btn-close{background:#f1f5f9;color:#64748b;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Inter',sans-serif}
   .print-label{font-size:11px;color:#94a3b8;margin-left:auto}
-  @media print{.print-bar,.print-fab{display:none!important}body{background:#fff;padding:0}.doc{border-radius:0;box-shadow:none;max-width:100%}}
+  @media print{
+    @page{size:A4 portrait;margin:6mm 8mm}
+    .print-bar,.print-fab{display:none!important}
+    body{background:#fff;padding:0;display:block}
+    .doc{border-radius:0;box-shadow:none;max-width:100%;width:100%}
+    .doc-header{padding:16px 20px 14px}
+    .header-ref{font-size:20px}
+    .doc-body{padding:14px 20px}
+    .total-box{padding:12px 16px;margin:12px 0}
+    .total-value{font-size:24px}
+    .section{margin-bottom:10px}
+    .produto-card{padding:10px;margin-bottom:12px}
+    .garantia-box{padding:10px 12px;margin-bottom:10px}
+    .contact-box{padding:10px 12px;margin-bottom:12px}
+    .verify-box{padding:8px 12px;margin-bottom:10px}
+    .doc-footer{padding:10px 20px}
+    .brand-row{margin-bottom:12px}
+    .parcelas-section{margin-bottom:10px}
+  }
   @media(max-width:520px){.doc-header{padding:20px 20px 18px}.doc-body{padding:18px 20px}.header-ref{font-size:20px}.total-value{font-size:26px}.info-grid{grid-template-columns:1fr}.info-item.full{grid-column:1}}
 </style>
 </head>
@@ -547,7 +565,7 @@ export default function VendasTable() {
         <div class="garantia-icon">🛡️</div>
         <div>
           <div class="garantia-title">Garantia contra Defeito de Fábrica — 30 dias</div>
-          <div class="garantia-text">Este produto possui <strong>30 dias de garantia</strong> contra defeitos de fabricação comprovados. Não nos responsabilizamos por danos decorrentes de mau uso, quedas, contato com líquidos, violação do produto ou qualquer avaria de origem externa.<br><br>Todo acionamento de garantia passará por <strong>análise técnica</strong> para verificação e confirmação da legitimidade do defeito antes de qualquer providência.</div>
+          <div class="garantia-text"><strong>30 dias</strong> contra defeitos de fabricação comprovados. Não nos responsabilizamos por danos causados por mau uso, quedas, líquidos, violação ou avarias externas. Todo acionamento passa por <strong>análise técnica</strong> para confirmar a legitimidade antes de qualquer providência.</div>
         </div>
       </div>
 

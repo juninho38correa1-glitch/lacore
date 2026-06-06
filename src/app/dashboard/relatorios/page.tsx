@@ -348,12 +348,12 @@ export default function RelatoriosPage() {
           </div>
         </div>
         {reportData && (
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', overflowY: 'hidden' }}>
+          <div style={{ overflow: 'hidden', position: 'relative' }}>
             <iframe
               srcDoc={reportData.html}
               style={{
-                width: '100%', minWidth: 600,
-                height: 'min(65vh, 520px)',
+                width: '100%',
+                height: 'min(70dvh, 560px)',
                 border: 'none', background: '#fff', display: 'block',
               }}
               title={reportData.title}
