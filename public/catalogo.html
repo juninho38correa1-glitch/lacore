@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Catálogo — Lacore Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<style>
+/* ─── Reset ─────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ─── Tokens (paleta 03) ───────────────── */
+:root{
+  --bg:       #09090b;
+  --bg-1:     #18181b;
+  --bg-2:     #27272a;
+  --bg-3:     #3f3f46;
+  --t1:       #fafafa;
+  --t2:       #a1a1aa;
+  --t3:       #71717a;
+  --t4:       #52525b;
+  --border:   #27272a;
+  --border2:  #3f3f46;
+  --green:    #25d366;
+  --green-d:  #0d6b4a;
+  --spring:   cubic-bezier(.34,1.56,.64,1);
+  --soft:     cubic-bezier(.34,1.2,.64,1);
+}
+
+/* ─── Grid uniforme (06 organizado) ─────── */
+.bento-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:16px;
+}
+/* Mobile: 2 colunas */
+@media(max-width:540px){
+  .bento-grid{ grid-template-columns:1fr 1fr; gap:12px; }
+}
+/* Classes de span — desabilitadas, todos iguais */
+.s2,.s3,.st{ grid-column:unset; grid-row:unset; }
+
+/* ─── Card (clay hover dark) ────────────── */
+.card{
+  background:var(--bg-1);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  cursor:pointer;
+  /* Clay shadow dark version do 06 */
+  box-shadow:0 8px 0 rgba(0,0,0,.5),0 16px 36px rgba(0,0,0,.3);
+  transition:transform .3s var(--spring),box-shadow .3s var(--spring),border-color .2s;
+  -webkit-user-select:none;user-select:none;
+}
+.card:hover{
+  transform:translateY(-6px) scale(1.015);
+  box-shadow:0 14px 0 rgba(0,0,0,.55),0 28px 56px rgba(0,0,0,.4);
+  border-color:var(--border2);
+}
+.card:active{
+  transform:translateY(1px) scale(.98);
+  box-shadow:0 4px 0 rgba(0,0,0,.4),0 8px 18px rgba(0,0,0,.25);
+  transition-duration:.08s;
+}
+
+/* ─── Overlays — não mais necessários (foto em fluxo) ── */
+.card-grad{ display:none }
+.brand-tag{
+  position:absolute;top:11px;left:11px;
+  background:rgba(9,9,11,.78);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.08);border-radius:99px;
+  padding:3px 10px;font-size:10px;font-weight:600;color:var(--t2);letter-spacing:.04em;
+}
+.hot-badge{
+  position:absolute;top:11px;right:11px;
+  background:#ef4444;color:#fff;font-size:9px;font-weight:700;
+  padding:3px 8px;border-radius:99px;letter-spacing:.05em;
+}
+.label-badge{
+  position:absolute;top:11px;right:11px;
+  background:rgba(245,158,11,.15);color:#fbbf24;
+  border:1px solid rgba(245,158,11,.25);
+  font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;
+}
+.esgotado-ov{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.52);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.esgotado-faixa{
+  background:rgba(220,38,38,.9);color:#fff;
+  font-size:11px;font-weight:900;letter-spacing:.18em;
+  padding:5px 48px;transform:rotate(-28deg);white-space:nowrap;
+}
+.price-tag{
+  position:absolute;bottom:13px;left:13px;
+  background:rgba(9,9,11,.9);backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:8px 12px;
+}
+
+/* ─── Filtros spring (06) ───────────────── */
+.fpill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:9px 20px;border-radius:99px;
+  font-family:'Sora',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;border:1.5px solid;
+  transition:all .22s var(--spring);
+  /* Touch target mínimo 44px */
+  min-height:44px;
+}
+.fpill.on {background:var(--t1);border-color:var(--t1);color:var(--bg);transform:scale(1.04) translateY(-1px);box-shadow:0 5px 0 rgba(255,255,255,.1)}
+.fpill.off{background:transparent;border-color:var(--border);color:var(--t3)}
+.fpill.off:hover{border-color:var(--border2);color:var(--t2);transform:scale(1.03)}
+.fpill:active{transform:scale(.95)!important;transition-duration:.06s}
+
+/* ─── Botões clay dark ──────────────────── */
+.cbtn{
+  border-radius:12px;font-family:'Sora',sans-serif;font-weight:700;
+  cursor:pointer;border:none;
+  transition:all .2s var(--spring);min-height:48px;
+}
+.cbtn:hover{transform:translateY(-1px) scale(1.04)}
+.cbtn:active{transform:scale(.96) translateY(1px);transition-duration:.07s}
+
+.wabtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 20px;border-radius:12px;
+  background:linear-gradient(135deg,#25d366,#128c7e);
+  color:#fff;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;
+  box-shadow:0 5px 0 #0d6b4a,0 8px 20px rgba(37,211,102,.22);
+  transition:all .2s var(--spring);min-height:48px;
+}
+.wabtn:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 7px 0 #0d6b4a,0 12px 28px rgba(37,211,102,.28)}
+.wabtn:active{transform:translateY(2px) scale(.97);box-shadow:0 3px 0 #0d6b4a;transition-duration:.07s}
+
+/* ─── Modal bottom-sheet (06 spring) ───── */
+.modal-ov{
+  /* 100vw garante largura real do viewport — evita o deslocamento da scrollbar */
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(10px);
+  z-index:200;
+  display:flex;
+  /* Mobile: bottom-sheet elevado (não grudado na base) */
+  align-items:flex-end;
+  justify-content:center;
+  padding-bottom:max(24px, env(safe-area-inset-bottom,0));
+  opacity:0;pointer-events:none;transition:opacity .22s;
+}
+.modal-ov.open{opacity:1;pointer-events:all}
+
+.modal-sheet{
+  width:calc(100% - 16px);   /* 8px de margem em cada lado no mobile */
+  max-width:540px;
+  margin:0 auto;              /* garante centralização horizontal */
+  background:var(--bg-1);
+  border:1px solid var(--border);
+  border-radius:24px 24px 20px 20px; /* arredondado em todas as pontas */
+  padding:12px 16px calc(24px + env(safe-area-inset-bottom,0));
+  max-height:88dvh;overflow-y:auto;overflow-x:hidden;
+  transform:translateY(110%);
+  transition:transform .45s var(--soft);
+  box-shadow:0 -12px 50px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+.modal-ov.open .modal-sheet{transform:translateY(0)}
+
+/* Desktop: modal centralizado na tela (não bottom-sheet) */
+@media(min-width:640px){
+  .modal-ov{
+    align-items:center;
+    padding-bottom:0;
+  }
+  .modal-sheet{
+    border-radius:24px;
+    max-height:90dvh;
+    transform:scale(.94) translateY(16px);
+    transition:transform .35s var(--soft), opacity .25s;
+    opacity:0;
+  }
+  .modal-ov.open .modal-sheet{
+    transform:scale(1) translateY(0);
+    opacity:1;
+  }
+}
+
+/* ─── Thumbnails ──────────────────────── */
+.thumb{
+  width:56px;height:56px;border-radius:10px;
+  object-fit:contain;background:var(--bg-2);padding:4px;
+  border:2px solid var(--border);cursor:pointer;flex-shrink:0;
+  transition:border-color .15s,transform .2s var(--spring);
+  /* 44px min touch */
+  min-width:48px;
+}
+.thumb:hover,.thumb:active{transform:scale(1.1)}
+.thumb.sel{border-color:var(--t1)}
+
+/* ─── Parcelas ────────────────────────── */
+.pbtn{
+  padding:8px 4px;border-radius:10px;
+  border:1.5px solid var(--border);
+  cursor:pointer;font-family:'Sora',sans-serif;
+  font-weight:700;font-size:12px;
+  background:var(--bg-2);color:var(--t3);
+  transition:all .18s var(--spring);text-align:center;
+  min-height:44px;
+}
+.pbtn:hover{border-color:var(--border2);color:var(--t2);transform:scale(1.05)}
+.pbtn.sel{
+  background:var(--t1);border-color:var(--t1);color:var(--bg);
+  transform:scale(1.06);
+  box-shadow:0 3px 0 rgba(255,255,255,.08);
+}
+
+/* ─── Lightbox tela cheia ────────────── */
+.lbox{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,.96);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s;
+  cursor:zoom-out;
+  padding:20px;
+}
+.lbox.open{opacity:1;pointer-events:all}
+.lbox img{
+  max-width:100%;max-height:90dvh;
+  object-fit:contain;border-radius:12px;
+  transform:scale(.88);
+  transition:transform .35s var(--soft);
+  cursor:default;
+}
+.lbox.open img{transform:scale(1)}
+.lbox-close{
+  position:absolute;top:20px;right:20px;
+  width:44px;height:44px;border-radius:99px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.lbox-close:hover{background:rgba(255,255,255,.2)}
+.lbox-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:44px;height:44px;border-radius:99px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.lbox-nav:hover{background:rgba(255,255,255,.18)}
+
+/* ─── WhatsApp FAB ───────────────────── */
+.wa-fab{
+  position:fixed;
+  bottom:calc(20px + env(safe-area-inset-bottom,0));
+  right:20px;
+  width:54px;height:54px;border-radius:99px;
+  background:linear-gradient(135deg,#25d366,#128c7e);
+  border:none;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 5px 0 #0d6b4a,0 8px 28px rgba(37,211,102,.4);
+  z-index:100;transition:all .22s var(--spring);
+}
+.wa-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 8px 0 #0d6b4a,0 14px 36px rgba(37,211,102,.45)}
+.wa-fab:active{transform:scale(.95) translateY(2px);box-shadow:0 3px 0 #0d6b4a}
+
+/* ─── Scrollbar ──────────────────────── */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:99px}
+
+/* ─── NFC Watermark ─────────────────── */
+/*
+  filter: invert(1)   → converte o ícone preto em branco
+  mix-blend-mode: screen → remove o fundo escuro (preto vira transparente)
+  Resultado: ícone branco semi-transparente flutuando sobre a foto
+*/
+.nfc-watermark{
+  position:absolute;
+  bottom:10px;left:10px;
+  width:56px;height:42px;
+  color:#fff;
+  opacity:.22;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
+  pointer-events:none;
+  transition:opacity .2s;
+}
+.card:hover .nfc-watermark{ opacity:.35 }
+
+/* ─── Utilitários ────────────────────── */
+.hidden-item{display:none!important}
+.sora{font-family:'Sora',sans-serif}
+
+/* ─── Skeleton loading ───────────────── */
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel{
+  background:var(--bg-1);border:1px solid var(--border);border-radius:20px;
+  overflow:hidden;box-shadow:0 8px 0 rgba(0,0,0,.4);
+}
+.skel-img{
+  aspect-ratio:1;
+  background:linear-gradient(90deg,var(--bg-2) 25%,var(--bg-3) 50%,var(--bg-2) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s ease infinite;
+}
+.skel-line{
+  height:11px;border-radius:4px;
+  background:linear-gradient(90deg,var(--bg-2) 25%,var(--bg-3) 50%,var(--bg-2) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s ease infinite;
+}
+
+/* ─── Reduced motion ─────────────────── */
+@media(prefers-reduced-motion:reduce){
+  *,::before,::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* ─── Mobile refinamentos ─────────────── */
+@media(max-width:640px){
+  .hide-mobile{display:none!important}
+  .page-pad{padding:20px 14px 80px}
+  .hero-title{font-size:clamp(28px,9vw,44px)!important}
+  .modal-sheet{border-radius:22px 22px 0 0;padding:12px 14px calc(24px + env(safe-area-inset-bottom,0))}
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────── -->
+<header style="border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(9,9,11,.93);backdrop-filter:blur(24px)">
+  <div style="max-width:1200px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+
+    <!-- Logo — preenchida pelo JS via Supabase -->
+    <a href="#" id="logo-link" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0" aria-label="LACORE Store">
+      <!-- Ícone fallback (substituído pela logo real se existir) -->
+      <div id="logo-icon" style="width:34px;height:34px;border-radius:10px;background:#fafafa;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(255,255,255,.1);flex-shrink:0;overflow:hidden;transition:opacity .3s">
+        <svg id="logo-svg" width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#09090b" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div id="logo-text">
+        <p class="sora" style="font-size:15px;font-weight:800;letter-spacing:-.01em;line-height:1.1">LACORE</p>
+        <p style="font-size:9px;color:var(--t4);letter-spacing:.06em">STORE</p>
+      </div>
+    </a>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:11.5px;color:var(--t4)" id="hdr-count"></span>
+    </div>
+  </div>
+</header>
+
+<!-- ── CONTEÚDO ────────────────────────────────── -->
+<main style="max-width:1200px;margin:0 auto" class="page-pad" style="padding:36px 20px 100px">
+
+  <!-- Hero -->
+  <div style="margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div>
+      <p style="font-size:11px;color:var(--t4);font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Smartphones premium</p>
+      <h1 class="sora hero-title" style="font-size:clamp(30px,5vw,52px);font-weight:900;letter-spacing:-.04em;line-height:.92">
+        O smartphone<br><span style="color:var(--t4)">que você quer.</span>
+      </h1>
+    </div>
+    <!-- Filtros -->
+    <div id="filters" style="display:flex;gap:8px;flex-wrap:wrap" role="group" aria-label="Filtrar por marca"></div>
+  </div>
+
+  <!-- Skeleton loading -->
+  <div id="skeleton" class="bento-grid" aria-label="Carregando produtos" aria-busy="true"></div>
+
+  <!-- Barra de busca + ordenação -->
+  <div id="toolbar" style="display:none;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+    <div style="position:relative;flex:1;min-width:200px">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--t4)" stroke-width="2"
+           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input id="busca" type="search" placeholder="Buscar modelo..."
+             oninput="aplicarBuscaOrdem()"
+             style="padding:10px 12px 10px 36px;background:var(--bg-1);border:1px solid var(--border);border-radius:12px;
+                    color:var(--t1);font-size:13px;width:100%;outline:none;font-family:'Inter',sans-serif;
+                    transition:border-color .15s"
+             onfocus="this.style.borderColor='var(--border2)'"
+             onblur="this.style.borderColor='var(--border)'"
+             aria-label="Buscar produto"/>
+    </div>
+    <select id="ordem" onchange="aplicarBuscaOrdem()"
+            style="padding:10px 14px;background:var(--bg-1);border:1px solid var(--border);border-radius:12px;
+                   color:var(--t2);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;outline:none;
+                   min-height:44px;transition:border-color .15s"
+            onfocus="this.style.borderColor='var(--border2)'"
+            onblur="this.style.borderColor='var(--border)'"
+            aria-label="Ordenar por">
+      <option value="recentes">Mais recentes</option>
+      <option value="menor">Menor preço</option>
+      <option value="maior">Maior preço</option>
+      <option value="az">A — Z</option>
+    </select>
+  </div>
+
+  <!-- Grid -->
+  <div id="grid" class="bento-grid" role="list" style="display:none"></div>
+
+  <!-- Vazio -->
+  <div id="empty" style="display:none;text-align:center;padding:60px 20px">
+    <p class="sora" style="font-size:16px;font-weight:700;color:var(--t4)">Nenhum produto nesta categoria</p>
+    <button onclick="filtrar('Todos')" class="wabtn" style="margin-top:16px;padding:10px 24px;font-size:13px">Ver todos</button>
+  </div>
+</main>
+
+<!-- ── WhatsApp FAB ───────────────────────────── -->
+<button onclick="abrirWA(null)" class="wa-fab" aria-label="Falar no WhatsApp">
+  <svg width="22" height="22" fill="#fff" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</button>
+
+<!-- ── MODAL PRODUTO ───────────────────────────── -->
+<div class="modal-ov" id="modal" onclick="fecharModal()" role="dialog" aria-modal="true" aria-label="Detalhes do produto">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+
+    <!-- Handle -->
+    <div style="width:44px;height:5px;background:var(--bg-3);border-radius:99px;margin:0 auto 18px" aria-hidden="true"></div>
+
+    <!-- Foto principal — clicável para lightbox -->
+    <div style="position:relative;background:var(--bg-2);border-radius:16px;aspect-ratio:4/3;overflow:hidden;margin-bottom:10px;cursor:zoom-in" id="foto-wrap" onclick="abrirLightbox()">
+      <img id="modal-img" src="" alt="" style="width:100%;height:100%;object-fit:contain;padding:10px;transition:transform .35s var(--soft)"/>
+      <!-- Ícone de expand -->
+      <div style="position:absolute;bottom:10px;right:10px;width:32px;height:32px;background:rgba(9,9,11,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;pointer-events:none" aria-hidden="true">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--t2)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </div>
+      <!-- Botão fechar -->
+      <button onclick="event.stopPropagation();fecharModal()" aria-label="Fechar" style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:99px;background:rgba(9,9,11,.75);border:1px solid rgba(255,255,255,.1);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Thumbnails -->
+    <div id="thumbs" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;-webkit-overflow-scrolling:touch"></div>
+
+    <!-- Nome -->
+    <p id="m-marca" style="font-size:10.5px;color:var(--t4);font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px"></p>
+    <h2 id="m-title" class="sora" style="font-size:20px;font-weight:800;color:var(--t1);line-height:1.25;margin-bottom:4px"></h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <p id="m-sub" style="font-size:12.5px;color:var(--t3)"></p>
+      <span id="m-cond" style="font-size:10.5px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--t3);display:none"></span>
+    </div>
+
+    <!-- Preço -->
+    <p id="m-preco" class="sora" style="font-size:30px;font-weight:900;color:var(--t1);letter-spacing:-.03em;margin-bottom:3px"></p>
+    <p id="m-parc-prev" style="font-size:12px;color:var(--t3);margin-bottom:18px"></p>
+
+    <!-- Esgotado -->
+    <div id="m-esgotado" style="display:none;align-items:center;gap:8px;padding:12px 14px;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:13px;font-weight:600;margin-bottom:16px">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      Produto esgotado
+    </div>
+
+    <!-- ── Simulador InfinityPay ── -->
+    <div id="sim-wrap" style="background:var(--bg-2);border:1px solid var(--border);border-radius:16px;margin-bottom:14px;overflow:hidden">
+      <button id="sim-tog" onclick="toggleSim()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;min-height:48px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="var(--t3)" stroke-width="2" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div style="text-align:left">
+            <p style="font-size:13px;font-weight:600;color:var(--t1)">Simular parcelamento</p>
+            <p id="sim-sub" style="font-size:10.5px;color:var(--t4)">InfinityPay · até 12×</p>
+          </div>
+        </div>
+        <svg id="sim-chev" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="var(--t4)" stroke-width="2" style="transition:transform .25s;flex-shrink:0" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+
+      <div id="sim-body" style="display:none;padding:0 14px 16px;border-top:1px solid var(--border)">
+        <!-- Entrada -->
+        <div style="margin:12px 0 10px;display:flex;align-items:center;gap:8px;background:var(--bg-1);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+          <span style="font-size:11px;color:var(--t4);flex-shrink:0">Entrada (R$)</span>
+          <input id="ent-input" type="text" inputmode="decimal" placeholder="0,00" maxlength="10"
+                 oninput="onEntrada()"
+                 style="flex:1;background:transparent;border:none;outline:none;font-size:15px;font-weight:700;color:var(--t1);text-align:right;font-family:'Sora',sans-serif;min-width:0"/>
+          <button id="ent-clear" onclick="limparEntrada()" aria-label="Limpar entrada" style="display:none;background:none;border:none;cursor:pointer;color:var(--t4);padding:4px;min-width:32px;min-height:32px;display:none;align-items:center;justify-content:center">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <p id="ent-info" style="font-size:11.5px;color:var(--t3);margin-bottom:10px;display:none"></p>
+
+        <!-- Grade parcelas -->
+        <p style="font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Selecione as parcelas</p>
+        <div id="pgrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:14px"></div>
+
+        <!-- Resultado -->
+        <div id="sim-res" style="background:var(--bg-1);border:1px solid var(--border2);border-radius:12px;padding:13px 14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <p style="font-size:9.5px;color:var(--t4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Parcela</p>
+              <p id="res-parc" class="sora" style="font-size:21px;font-weight:800;color:#10b981"></p>
+            </div>
+            <div>
+              <p style="font-size:9.5px;color:var(--t4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Total</p>
+              <p id="res-total" class="sora" style="font-size:21px;font-weight:800;color:var(--t1)"></p>
+            </div>
+          </div>
+          <div id="res-nota" style="margin-top:10px;padding:7px 10px;border-radius:8px"></div>
+        </div>
+        <p style="font-size:10px;color:var(--t4);margin-top:8px;text-align:center">* Taxas InfinityPay (Visa/Master). Valor final pode variar conforme bandeira.</p>
+      </div>
+    </div>
+
+    <!-- Specs -->
+    <div id="specs-wrap" style="display:none;background:var(--bg-2);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:14px">
+      <p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--t4);margin-bottom:10px">Especificações</p>
+      <div id="specs-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <!-- Descrição -->
+    <p id="m-desc" style="font-size:13px;color:var(--t3);line-height:1.65;margin-bottom:16px;display:none"></p>
+
+    <!-- CTAs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:4px">
+      <button onclick="fecharModal()" class="cbtn" style="padding:14px;background:var(--bg-2);border:1px solid var(--border);color:var(--t2);font-size:14px">Voltar</button>
+      <button id="cta-wa" onclick="ctaWA()" class="wabtn" style="padding:14px;font-size:14px">
+        <svg width="15" height="15" fill="#fff" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Quero este!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LIGHTBOX TELA CHEIA ──────────────────────── -->
+<div class="lbox" id="lbox" onclick="fecharLightbox()" aria-label="Imagem em tela cheia" role="dialog">
+  <button class="lbox-close" onclick="fecharLightbox()" aria-label="Fechar tela cheia">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+  </button>
+  <button class="lbox-nav" id="lbox-prev" onclick="event.stopPropagation();lboxNav(-1)" aria-label="Foto anterior" style="left:16px">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  </button>
+  <img id="lbox-img" src="" alt="" onclick="event.stopPropagation()" style="max-width:100%;max-height:90dvh;object-fit:contain;border-radius:12px"/>
+  <button class="lbox-nav" id="lbox-next" onclick="event.stopPropagation();lboxNav(1)" aria-label="Próxima foto" style="right:16px">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+  </button>
+  <div id="lbox-counter" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-size:12px;color:rgba(255,255,255,.5);font-family:'Inter',sans-serif"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════════════ -->
+<script>
+gsap.registerPlugin(Flip);
+
+/* ── Taxas InfinityPay (projeto original) ── */
+const TAXAS = {2:5.39,3:6.12,4:6.85,5:7.57,6:8.28,7:8.99,8:9.69,9:10.38,10:11.06,11:11.74,12:12.40};
+const IOF   = 1.76;
+
+function calcParc(preco, n) {
+  if (n === 1) return { total:preco, parc:preco };
+  const t   = TAXAS[n] / 100;
+  const tot = preco * (1 + t) * (1 + IOF / 100);
+  return { total:tot, parc:tot/n };
+}
+
+/* ── Formatadores ── */
+function fmt(n) { return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'}) }
+
+/* ══════════════════════════════════════════
+   SUPABASE — dados reais do projeto Lacore
+══════════════════════════════════════════ */
+const { createClient } = supabase;
+const sb = createClient(
+  'https://ritvdomqjwodevyhpqox.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdHZkb21xandvZGV2eWhwcW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1ODcwMjcsImV4cCI6MjA5NTE2MzAyN30.eIS813sjVWvQihse4_uN5rnogEf7a_ghrynkoz5WePI'
+);
+const WA_NUMBER = '5544997230700';
+
+/* ── State global ── */
+let GRUPOS      = [];  // grupos carregados do Supabase
+let MARCAS      = ['Todos'];
+let filtroAtual = 'Todos';
+let modalGrupo  = null;
+let modalProd   = null;
+let modalImg    = '';
+let parcSel     = 12;
+let simAberto   = false;
+let lboxFotos   = [];
+let lboxIdx     = 0;
+
+/* ════════════════════════════════════════
+   FILTROS
+════════════════════════════════════════ */
+function renderFiltros() {
+  document.getElementById('filters').innerHTML = MARCAS.map(m => `
+    <button class="fpill ${m === filtroAtual ? 'on' : 'off'}"
+            onclick="filtrar('${m}')"
+            aria-pressed="${m === filtroAtual}">
+      ${m}
+    </button>`).join('');
+}
+
+/* ════════════════════════════════════════
+   CARREGAMENTO DE DADOS — Supabase
+   (mesma lógica do catalogo/page.tsx)
+════════════════════════════════════════ */
+function agrupar(prods) {
+  const map = {};
+  prods.forEach(p => {
+    const k = `${p.brand}|${p.model}|${p.storage || ''}`;
+    if (!map[k]) map[k] = { key:k, brand:p.brand, model:p.model, storage:p.storage||'', rep:p, cores:[], qtd:0, esgotado:false };
+    map[k].qtd++;
+    if (p.color && !map[k].cores.includes(p.color)) map[k].cores.push(p.color);
+    // rep = produto com mais fotos
+    if ((p.photos||[]).length > (map[k].rep.photos||[]).length) map[k].rep = p;
+  });
+  return Object.values(map);
+}
+
+async function carregarDados() {
+  try {
+    // 1. Produtos ativos visíveis no catálogo (com fotos)
+    const { data: ativos, error } = await sb
+      .from('products')
+      .select('*,photos:product_photos(*)')
+      .eq('status', 'ATIVO')
+      .order('date_added', { ascending: false });
+
+    if (error) throw error;
+
+    const prodsAtivos = (ativos || []).filter(p => p.catalog_visible !== false);
+    const gruposAtivos = agrupar(prodsAtivos);
+    const chavesAtivas = new Set(gruposAtivos.map(g => `${g.brand}|${g.model}|${g.storage}`));
+
+    // 2. Catálogo para esgotados (itens sem estoque ativo)
+    const { data: catalogData } = await sb
+      .from('product_catalog')
+      .select('*')
+      .neq('catalog_visible', false);
+
+    // 3. Fotos de produtos esgotados (via catalog_id)
+    const { data: fotosCatalog } = await sb
+      .from('product_photos')
+      .select('catalog_id, url, order')
+      .not('catalog_id', 'is', null)
+      .order('order');
+
+    const fotosPorCatalog = {};
+    (fotosCatalog || []).forEach(f => {
+      if (!fotosPorCatalog[f.catalog_id]) fotosPorCatalog[f.catalog_id] = [];
+      fotosPorCatalog[f.catalog_id].push({ url: f.url, order: f.order });
+    });
+
+    // Fallback: fotos de produtos vendidos com esse catalog_id
+    const { data: vendidos } = await sb
+      .from('products')
+      .select('catalog_id, photos:product_photos(*)')
+      .eq('status', 'VENDIDO')
+      .not('catalog_id', 'is', null);
+
+    (vendidos || []).forEach(v => {
+      if (!fotosPorCatalog[v.catalog_id] && (v.photos||[]).length) {
+        fotosPorCatalog[v.catalog_id] = v.photos;
+      }
+    });
+
+    // 4. Montar grupos esgotados
+    const gruposEsgotados = [];
+    (catalogData || []).forEach(cat => {
+      const chave = `${cat.brand}|${cat.model}|${cat.storage||''}`;
+      if (!chavesAtivas.has(chave)) {
+        const fotos = fotosPorCatalog[cat.id] || [];
+        gruposEsgotados.push({
+          key: chave,
+          brand: cat.brand || '',
+          model: cat.model || '',
+          storage: cat.storage || '',
+          esgotado: true,
+          qtd: 0,
+          cores: cat.color ? [cat.color] : [],
+          rep: {
+            id: cat.id,
+            brand: cat.brand || '',
+            model: cat.model || '',
+            storage: cat.storage || '',
+            color: cat.color || '',
+            price_current: cat.price_current,
+            catalog_highlight: cat.catalog_highlight,
+            catalog_label: cat.catalog_label,
+            catalog_description: cat.catalog_description,
+            catalog_warranty: cat.catalog_warranty,
+            processor: cat.processor,
+            ram: cat.ram,
+            camera_main: cat.camera_main,
+            camera_front: cat.camera_front,
+            battery: cat.battery,
+            screen: cat.screen,
+            nfc: cat.nfc,
+            charging: cat.charging,
+            connectivity: cat.connectivity,
+            os: cat.os,
+            condition: 'Seminovo',
+            photos: fotos,
+          }
+        });
+      }
+    });
+
+    // 5. Combinar e atualizar state
+    GRUPOS = [...gruposAtivos, ...gruposEsgotados];
+    MARCAS = ['Todos', ...new Set(GRUPOS.map(g => g.brand))].filter(Boolean);
+
+    return true;
+  } catch (e) {
+    console.error('Erro ao carregar dados:', e);
+    return false;
+  }
+}
+
+/* ════════════════════════════════════════
+   GRID BENTO
+════════════════════════════════════════ */
+function renderGrid() {
+  document.getElementById('grid').innerHTML = GRUPOS.map(g => {
+    const p    = g.rep;                                          // produto representante
+    const foto = (p.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
+    const fotos = (p.photos||[]).sort((a,b)=>a.order-b.order).map(f=>f.url);
+    const preco  = p.price_current;
+    const c12    = preco ? calcParc(preco, 12) : null;
+
+    const cardId = encodeURIComponent(g.key); // usa a chave do grupo como ID único
+
+    return `
+    <div class="card"
+         data-marca="${p.brand}" data-key="${cardId}"
+         role="listitem"
+         onclick="abrirModalPorChave('${cardId}')"
+         aria-label="${p.brand} ${p.model}${preco ? ', '+fmt(preco) : ''}">
+
+      <!-- Foto -->
+      <div style="position:relative;overflow:hidden;aspect-ratio:1;background:var(--bg-2)">
+        ${foto
+          ? `<img src="${foto}" alt="${p.brand} ${p.model}" loading="lazy"
+                  style="width:100%;height:100%;object-fit:cover;transition:transform .45s var(--soft)"
+                  onmouseover="this.style.transform='scale(1.05)'"
+                  onmouseout="this.style.transform='scale(1)'"/>`
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+               <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="var(--t4)" stroke-width="1.5" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="17" x2="12" y2="17.5" stroke-linecap="round" stroke-width="2"/></svg>
+             </div>`
+        }
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(9,9,11,.3) 0%,transparent 60%)" aria-hidden="true"></div>
+        ${p.catalog_highlight && !p.catalog_label ? `<div style="position:absolute;top:11px;right:11px;background:rgba(99,102,241,.85);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.05em">DESTAQUE</div>` : ''}
+        ${p.catalog_label    ? `<div class="label-badge">${p.catalog_label}</div>` : ''}
+        ${g.esgotado
+          ? `<div class="esgotado-ov" aria-hidden="true"><div class="esgotado-faixa">ESGOTADO</div></div>`
+          : (fotos.length > 1 ? `<div style="position:absolute;bottom:10px;right:10px;background:rgba(9,9,11,.75);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:4px 9px;font-size:9px;color:var(--t3)">${fotos.length} fotos</div>` : '')
+        }
+        ${p.nfc
+          ? `<div class="nfc-watermark" aria-label="Possui NFC">
+               <svg viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+                 <ellipse cx="38" cy="45" rx="34" ry="40" stroke="currentColor" stroke-width="4.5"/>
+                 <path d="M24 45 C24 35 32 28 32 28" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                 <path d="M30 45 C30 38 36 33 36 33" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                 <path d="M36 45 C36 41 39 38 39 38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                 <path d="M24 45 C24 55 32 62 32 62" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                 <path d="M30 45 C30 52 36 57 36 57" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                 <path d="M36 45 C36 49 39 52 39 52" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                 <rect x="78" y="14" width="30" height="52" rx="5" stroke="currentColor" stroke-width="4.5"/>
+                 <line x1="88" y1="21" x2="98" y2="21" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+                 <rect x="82" y="27" width="22" height="26" rx="2" stroke="currentColor" stroke-width="3"/>
+                 <path d="M78 52 C72 54 68 58 66 64 C64 70 66 76 70 78 C76 80 86 78 92 74 C98 70 104 64 106 58" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                 <path d="M106 58 C108 52 106 46 100 44 C96 43 92 44 90 47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+               </svg>
+             </div>`
+          : ''}
+      </div>
+
+      <!-- Info -->
+      <div style="padding:13px 14px 14px">
+        <p style="font-size:10px;color:var(--t4);font-weight:600;letter-spacing:.05em;margin-bottom:3px;text-transform:uppercase">${p.brand}</p>
+        <p class="sora" style="font-size:14px;font-weight:700;color:var(--t1);line-height:1.3;margin-bottom:2px">${p.model}${p.storage ? ' '+p.storage : ''}</p>
+        <p style="font-size:11px;color:var(--t3);margin-bottom:11px">${g.esgotado ? '<span style="color:#f87171;font-weight:600">Esgotado</span>' : (g.cores.length > 1 ? g.cores.slice(0,3).join(' · ')+(g.cores.length>3?'…':'') : (p.color||''))}</p>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:6px">
+          <div>
+            <p class="sora" style="font-size:19px;font-weight:800;color:${g.esgotado?'var(--t3)':'var(--t1)'};letter-spacing:-.02em;line-height:1">${preco ? fmt(preco) : 'Consulte'}</p>
+            ${c12 && !g.esgotado ? `<p style="font-size:10px;color:var(--t4);margin-top:2px">12× ${fmt(c12.parc)}</p>` : ''}
+          </div>
+          <button onclick="event.stopPropagation();abrirModalPorChave('${cardId}')"
+                  style="flex-shrink:0;width:34px;height:34px;border-radius:99px;background:var(--bg-2);border:1px solid var(--border);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s var(--spring)"
+                  onmouseover="this.style.background='var(--bg-3)';this.style.borderColor='var(--border2)'"
+                  onmouseout="this.style.background='var(--bg-2)';this.style.borderColor='var(--border)'"
+                  aria-label="Ver detalhes de ${p.model}">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════
+   BUSCA + ORDENAÇÃO
+════════════════════════════════════════ */
+function aplicarBuscaOrdem() {
+  const q     = (document.getElementById('busca')?.value || '').toLowerCase().trim();
+  const ordem = document.getElementById('ordem')?.value || 'recentes';
+
+  // Filtrar
+  let lista = [...GRUPOS];
+  if (filtroAtual !== 'Todos') lista = lista.filter(g => g.brand === filtroAtual);
+  if (q) lista = lista.filter(g =>
+    `${g.brand} ${g.model} ${g.storage} ${g.rep?.color||''}`.toLowerCase().includes(q)
+  );
+
+  // Ordenar
+  if      (ordem === 'menor') lista.sort((a,b) => (a.rep?.price_current||0) - (b.rep?.price_current||0));
+  else if (ordem === 'maior') lista.sort((a,b) => (b.rep?.price_current||0) - (a.rep?.price_current||0));
+  else if (ordem === 'az')    lista.sort((a,b) => `${a.brand}${a.model}`.localeCompare(`${b.brand}${b.model}`));
+
+  const grid  = document.getElementById('grid');
+  const items = [...grid.querySelectorAll('.card')];
+
+  // ★ Captura posição ANTES de mover — Flip precisa disso para animar
+  const state = Flip.getState(items);
+
+  // Mapa chave → elemento DOM
+  const cardMap = {};
+  items.forEach(el => { cardMap[el.dataset.key] = el; });
+
+  const visKeys = new Set(lista.map(g => encodeURIComponent(g.key)));
+
+  // Remove todos do grid
+  items.forEach(el => grid.removeChild(el));
+
+  // Re-insere na nova ordem (visíveis primeiro, depois ocultos)
+  lista.forEach(g => {
+    const el = cardMap[encodeURIComponent(g.key)];
+    if (el) { el.classList.remove('hidden-item'); grid.appendChild(el); }
+  });
+  items.forEach(el => {
+    if (!visKeys.has(el.dataset.key)) {
+      el.classList.add('hidden-item');
+      grid.appendChild(el);
+    }
+  });
+
+  document.getElementById('empty').style.display = lista.length === 0 ? 'block' : 'none';
+
+  // ★ Anima do estado antigo para a nova posição
+  Flip.from(state, {
+    duration: .42,
+    ease: 'power2.inOut',
+    onEnter: els => gsap.fromTo(els, { opacity:0, scale:.93 }, { opacity:1, scale:1, duration:.3, ease:'power2.out' }),
+    onLeave: els => gsap.to(els,    { opacity:0, scale:.93, duration:.2 }),
+  });
+}
+
+/* ════════════════════════════════════════
+   FILTRAR — GSAP Flip + spring do 06
+════════════════════════════════════════ */
+function filtrar(marca) {
+  filtroAtual = marca;
+  renderFiltros();
+  const buscaEl = document.getElementById('busca');
+  if (buscaEl) buscaEl.value = ''; // limpa busca ao trocar marca
+  aplicarBuscaOrdem(); // delega tudo ao mesmo pipeline
+  // atualiza contador do header
+  const vis = GRUPOS.filter(g => marca === 'Todos' || g.brand === marca).length;
+  const hc  = document.getElementById('hdr-count');
+  hc.textContent  = marca !== 'Todos' ? `${vis} modelo${vis !== 1 ? 's' : ''}` : '';
+  hc.style.display = marca !== 'Todos' ? 'block' : 'none';
+}
+
+/* ════════════════════════════════════════
+   MODAL — bottom-sheet com spring
+════════════════════════════════════════ */
+/* Abre modal pelo ID do grupo (chave encodeada) */
+function abrirModalPorChave(cardId) {
+  const chave = decodeURIComponent(cardId);
+  const grupo = GRUPOS.find(g => g.key === chave);
+  if (!grupo) return;
+  modalGrupo = grupo;
+  modalProd  = grupo.rep;
+  modalImg   = (modalProd.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
+  parcSel    = 12;
+  simAberto  = false;
+
+  preencherModal();
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modal').classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function preencherModal() {
+  const p = modalProd;
+
+  /* foto + thumbs */
+  const fotos = (p.photos||[]).sort((a,b)=>a.order-b.order).map(f=>f.url);
+  document.getElementById('modal-img').src = modalImg || '';
+  document.getElementById('modal-img').alt = `${p.brand} ${p.model}`;
+
+  const thumbsEl = document.getElementById('thumbs');
+  if (fotos.length > 1) {
+    thumbsEl.style.display = 'flex';
+    thumbsEl.innerHTML = fotos.map((f, i) =>
+      `<img src="${f}" alt="${p.model} foto ${i+1}"
+            class="thumb ${modalImg === f ? 'sel' : ''}"
+            onclick="selecionarFoto('${f}')" />`
+    ).join('');
+  } else {
+    thumbsEl.style.display = 'none';
+  }
+
+  /* dados */
+  const g = modalGrupo;
+  document.getElementById('m-marca').textContent  = (p.brand||'').toUpperCase();
+  document.getElementById('m-title').textContent  = `${p.model}${p.storage ? ' '+p.storage : ''}${p.color ? ' — '+p.color : ''}`;
+  document.getElementById('m-sub').textContent    = [p.storage, p.color, g?.cores?.length > 1 ? `${g.cores.length} cores` : ''].filter(Boolean).join(' · ');
+
+  const condEl  = document.getElementById('m-cond');
+  const cond    = p.condition || 'Seminovo';
+  const condCor = cond === 'Novo'      ? 'background:rgba(16,185,129,.12);color:#34d399;border-color:rgba(16,185,129,.25)' :
+                  cond === 'Seminovo'  ? 'background:rgba(59,130,246,.10);color:#60a5fa;border-color:rgba(59,130,246,.25)' :
+                  cond === 'Usado'     ? 'background:rgba(245,158,11,.10);color:#fbbf24;border-color:rgba(245,158,11,.25)' :
+                                         'background:var(--bg-2);color:var(--t3);border-color:var(--border)';
+  condEl.textContent    = cond;
+  condEl.style.cssText += `;display:inline-block;${condCor}`;
+
+  /* preço */
+  const preco = p.price_current;
+  document.getElementById('m-preco').textContent = preco ? fmt(preco) : 'Consulte o preço';
+  if (preco) {
+    const c12 = calcParc(preco, 12);
+    document.getElementById('m-parc-prev').textContent  = `ou ${fmt(c12.parc)}/mês em até 12× com juros`;
+    document.getElementById('m-parc-prev').style.display = 'block';
+    document.getElementById('sim-wrap').style.display    = 'block';
+    document.getElementById('sim-sub').textContent = `até 12× de ${fmt(c12.parc)}`;
+  } else {
+    document.getElementById('m-parc-prev').style.display = 'none';
+    document.getElementById('sim-wrap').style.display    = 'none';
+  }
+
+  /* simulador fechado */
+  document.getElementById('sim-body').style.display = 'none';
+  document.getElementById('sim-chev').style.transform = 'rotate(0)';
+  simAberto = false;
+  document.getElementById('ent-input').value = '';
+  document.getElementById('ent-clear').style.display = 'none';
+  document.getElementById('ent-info').style.display  = 'none';
+
+  /* specs — campos reais do Supabase */
+  const specs = [
+    ['NFC',          p.nfc !== undefined && p.nfc !== null ? (p.nfc ? '✓ NFC' : 'Sem NFC') : null, p.nfc ? 'green':'gray'],
+    ['Conectividade',p.connectivity, null],
+    ['Processador',  p.processor, null],
+    ['RAM',          p.ram, null],
+    ['Bateria',      p.battery, null],
+    ['Carregamento', p.charging, null],
+    ['Tela',         p.screen, null],
+    ['Câmera',       p.camera_main, null],
+    ['Câm. Frontal', p.camera_front, null],
+    ['Sistema',      p.os, null],
+  ].filter(([,v]) => v);
+
+  const sw = document.getElementById('specs-wrap');
+  if (specs.length) {
+    sw.style.display = 'block';
+    document.getElementById('specs-list').innerHTML = specs.map(([l, v, t]) => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <span style="font-size:12px;color:var(--t4);flex-shrink:0">${l}</span>
+        <span style="font-size:12px;${
+          t==='green' ? 'display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.2);font-weight:700;font-size:11px' :
+          t==='gray'  ? 'display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;background:var(--bg-2);color:var(--t3);border:1px solid var(--border);font-weight:600;font-size:11px' :
+                        'color:var(--t2);text-align:right'
+        }">
+          ${t==='green' ? '<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' :
+            t==='gray'  ? '<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}
+          ${v}
+        </span>
+      </div>`).join('');
+  } else {
+    sw.style.display = 'none';
+  }
+
+  /* descrição — catalog_description no Supabase */
+  const md = document.getElementById('m-desc');
+  md.textContent = p.catalog_description || '';
+  md.style.display = p.catalog_description ? 'block' : 'none';
+
+  /* esgotado — vem do grupo */
+  const eb = document.getElementById('m-esgotado');
+  const cw = document.getElementById('cta-wa');
+  if (g?.esgotado) {
+    eb.style.display = 'flex'; cw.disabled = true;
+    cw.style.opacity = '.4'; cw.style.cursor = 'not-allowed';
+  } else {
+    eb.style.display = 'none'; cw.disabled = false;
+    cw.style.opacity = '1';   cw.style.cursor = 'pointer';
+  }
+}
+
+function selecionarFoto(url) {
+  modalImg = url;
+  const img = document.getElementById('modal-img');
+  gsap.fromTo(img, { opacity:.3, scale:.96 }, { opacity:1, scale:1, duration:.3, ease:'power2.out' });
+  img.src = url;
+  document.querySelectorAll('.thumb').forEach(t => {
+    t.classList.toggle('sel', t.getAttribute('src') === url);
+  });
+}
+
+/* ════════════════════════════════════════
+   SIMULADOR InfinityPay
+════════════════════════════════════════ */
+function toggleSim() {
+  simAberto = !simAberto;
+  document.getElementById('sim-body').style.display = simAberto ? 'block' : 'none';
+  document.getElementById('sim-chev').style.transform = simAberto ? 'rotate(180deg)' : 'rotate(0)';
+  if (simAberto) {
+    gsap.from('#sim-body', { opacity:0, y:6, duration:.28, ease:'power2.out' });
+    renderSimulador();
+  }
+  const p = modalProd;
+  const c12 = p?.price_current ? calcParc(p.price_current, 12) : null;
+  document.getElementById('sim-sub').textContent = simAberto
+    ? 'Fechar simulador'
+    : (c12 ? `até 12× de ${fmt(c12.parc)}` : 'InfinityPay · até 12×');
+}
+
+function getEntrada() {
+  const raw = (document.getElementById('ent-input').value || '').replace(',','.').replace(/[^0-9.]/g,'');
+  return Math.min(Math.max(parseFloat(raw)||0, 0), modalProd?.price_current||0);
+}
+
+function onEntrada() {
+  const v     = getEntrada();
+  const preco = modalProd?.price_current || 0;
+  const clr   = document.getElementById('ent-clear');
+  const info  = document.getElementById('ent-info');
+  clr.style.display  = v > 0 ? 'flex'  : 'none';
+  info.style.display = v > 0 ? 'block' : 'none';
+  if (v > 0) info.textContent = `Parcelar: ${fmt(preco - v)} (${fmt(preco)} − ${fmt(v)} entrada)`;
+  renderSimulador();
+}
+
+function limparEntrada() {
+  document.getElementById('ent-input').value = '';
+  document.getElementById('ent-clear').style.display = 'none';
+  document.getElementById('ent-info').style.display  = 'none';
+  renderSimulador();
+}
+
+function renderSimulador() {
+  if (!simAberto) return;
+  const p    = modalProd;
+  const ent  = getEntrada();
+  const base = (p?.price_current || 0) - ent;
+  const c    = calcParc(base, parcSel);
+
+  /* grade */
+  document.getElementById('pgrid').innerHTML =
+    [1,2,3,4,5,6,7,8,9,10,11,12].map(n => `
+      <button class="pbtn ${parcSel===n?'sel':''}"
+              onclick="selParc(${n})"
+              aria-pressed="${parcSel===n}"
+              aria-label="${n===1?'À vista':`${n} parcelas`}">
+        <div style="font-size:13px;font-weight:800;line-height:1">${n}×</div>
+        <div style="font-size:8.5px;margin-top:2px">${n===1?'à vista':TAXAS[n]+'%'}</div>
+      </button>`).join('');
+
+  /* resultado */
+  const parcFmt  = fmt(parcSel===1 ? base : c.parc);
+  const totalFmt = fmt(parcSel===1 ? base : c.total);
+  document.getElementById('res-parc').textContent  = parcFmt;
+  document.getElementById('res-total').textContent = totalFmt;
+
+  const nota = document.getElementById('res-nota');
+  if (parcSel === 1) {
+    nota.style.cssText = 'margin-top:10px;padding:7px 10px;border-radius:8px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15)';
+    nota.innerHTML = `<p style="font-size:11px;color:#34d399">Pagamento à vista — sem acréscimos</p>`;
+  } else {
+    nota.style.cssText = 'margin-top:10px;padding:7px 10px;border-radius:8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12)';
+    nota.innerHTML = `<p style="font-size:11px;color:#fbbf24">Taxa ${TAXAS[parcSel]}% + IOF ${IOF}% aplicados</p>`;
+  }
+}
+
+function selParc(n) {
+  parcSel = n;
+  renderSimulador();
+  gsap.from(`.pbtn:nth-child(${n})`, { scale:.82, duration:.35, ease:'back.out(2)' });
+}
+
+/* ════════════════════════════════════════
+   LIGHTBOX — tela cheia com nav
+════════════════════════════════════════ */
+function abrirLightbox() {
+  if (!modalProd) return;
+  // fotos reais do Supabase (photos[].url ordenado por order)
+  lboxFotos = (modalProd.photos||[]).sort((a,b)=>a.order-b.order).map(f=>f.url);
+  if (!lboxFotos.length) return; // sem fotos, não abre
+  lboxIdx = lboxFotos.indexOf(modalImg);
+  if (lboxIdx < 0) lboxIdx = 0;
+  atualizarLightbox();
+  document.getElementById('lbox').classList.add('open');
+  // não mexe no overflow aqui — o modal já travou o scroll
+}
+
+function fecharLightbox() {
+  document.getElementById('lbox').classList.remove('open');
+  document.body.style.overflow = 'hidden'; // modal ainda está aberto
+}
+
+function atualizarLightbox() {
+  const img = document.getElementById('lbox-img');
+  gsap.fromTo(img, { opacity:.3, scale:.94 }, { opacity:1, scale:1, duration:.3, ease:'power2.out' });
+  img.src = lboxFotos[lboxIdx];
+  img.alt = `${modalProd.marca} ${modalProd.modelo} — foto ${lboxIdx+1}`;
+  document.getElementById('lbox-counter').textContent =
+    lboxFotos.length > 1 ? `${lboxIdx+1} / ${lboxFotos.length}` : '';
+  document.getElementById('lbox-prev').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
+  document.getElementById('lbox-next').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
+}
+
+function lboxNav(dir) {
+  lboxIdx = (lboxIdx + dir + lboxFotos.length) % lboxFotos.length;
+  atualizarLightbox();
+  // Atualiza também a foto selecionada no modal
+  modalImg = lboxFotos[lboxIdx];
+  document.getElementById('modal-img').src = modalImg;
+  document.querySelectorAll('.thumb').forEach(t =>
+    t.classList.toggle('sel', t.getAttribute('src') === modalImg));
+}
+
+/* Teclado no lightbox */
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight') lboxNav(1);
+  if (e.key === 'ArrowLeft')  lboxNav(-1);
+  if (e.key === 'Escape')     fecharLightbox();
+});
+
+/* Swipe mobile no lightbox */
+(function(){
+  let startX = 0;
+  const lb = document.getElementById('lbox');
+  lb.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive:true});
+  lb.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) lboxNav(dx < 0 ? 1 : -1);
+  });
+})();
+
+/* Swipe mobile para fechar modal */
+(function(){
+  let startY = 0;
+  const sheet = document.querySelector('.modal-sheet');
+  sheet.addEventListener('touchstart', e => startY = e.touches[0].clientY, {passive:true});
+  sheet.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 80 && sheet.scrollTop === 0) fecharModal();
+  });
+})();
+
+/* ════════════════════════════════════════
+   WHATSAPP
+════════════════════════════════════════ */
+function ctaWA() {
+  if (!modalProd || modalGrupo?.esgotado) return;
+  abrirWA(modalProd);
+}
+
+function abrirWA(prod) {
+  let msg;
+  if (prod && typeof prod === 'object') {
+    const p   = prod;
+    const preco = p.price_current;
+    const c12 = preco ? calcParc(preco, 12) : null;
+    msg = `Olá! Vi o *${p.brand} ${p.model}${p.storage?' '+p.storage:''}${p.color?' — '+p.color:''}* no catálogo da LacoreStore`
+        + (preco ? ` por *${fmt(preco)}* à vista (ou ${fmt(c12.parc)}/mês em até 12×)` : '')
+        + ` e tenho interesse! Ainda está disponível?`;
+  } else {
+    msg = `Olá! Gostaria de conhecer os produtos da LacoreStore. Pode me ajudar? 😊`;
+  }
+  mostrarToast('Abrindo WhatsApp...', '#25d366');
+  setTimeout(() => window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank'), 300);
+}
+
+/* ── Toast leve ── */
+function mostrarToast(msg, cor = 'var(--t2)') {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(8px);
+    background:var(--bg-1);border:1px solid var(--border2);color:${cor};
+    font-size:13px;font-weight:600;padding:10px 20px;border-radius:99px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:500;
+    transition:opacity .3s,transform .3s;opacity:0;white-space:nowrap;
+    font-family:'Inter',sans-serif`;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+  setTimeout(() => {
+    t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)';
+    setTimeout(() => t.remove(), 320);
+  }, 2000);
+}
+
+/* ════════════════════════════════════════
+   INIT — async com dados reais do Supabase
+════════════════════════════════════════ */
+
+/* Skeletons enquanto carrega */
+function renderSkeleton(n = 8) {
+  document.getElementById('skeleton').innerHTML =
+    Array.from({length:n}, () => `
+      <div class="skel">
+        <div class="skel-img"></div>
+        <div style="padding:13px 14px 14px;display:flex;flex-direction:column;gap:8px">
+          <div class="skel-line" style="width:40%"></div>
+          <div class="skel-line" style="width:75%"></div>
+          <div class="skel-line" style="width:55%;margin-top:4px"></div>
+        </div>
+      </div>`).join('');
+}
+
+/* ── Logo do Supabase (igual ao Sidebar.tsx original) ── */
+async function carregarLogo() {
+  try {
+    const { data } = await sb
+      .from('system_config')
+      .select('value')
+      .eq('key', 'company_logo')
+      .single();
+
+    if (data?.value) {
+      const iconEl = document.getElementById('logo-icon');
+      // Remove fundo branco ao trocar para logo real
+      iconEl.style.background = 'transparent';
+      iconEl.style.boxShadow  = 'none';
+      iconEl.style.borderRadius = '0';
+      iconEl.innerHTML = `<img src="${data.value}" alt="Logo LACORE"
+        style="width:34px;height:34px;object-fit:contain;display:block"/>`;
+    }
+  } catch(e) {
+    // Fallback silencioso — mantém o SVG padrão
+  }
+}
+
+async function init() {
+  /* Animações de entrada do hero */
+  gsap.from('h1',       { opacity:0, y:18, duration:.55, ease:'power3.out', delay:.04 });
+  gsap.from('#filters', { opacity:0, y:14, duration:.45, ease:'power2.out', delay:.15 });
+
+  /* Carrega logo em paralelo com os produtos */
+  carregarLogo();
+
+  /* Mostrar filtro "Todos" enquanto carrega */
+  renderFiltros();
+
+  /* Skeleton de loading */
+  renderSkeleton();
+
+  /* Carregar dados reais */
+  const ok = await carregarDados();
+
+  /* Esconder skeleton, mostrar grid */
+  document.getElementById('skeleton').style.display = 'none';
+  document.getElementById('grid').style.display     = 'grid';
+
+  if (!ok || GRUPOS.length === 0) {
+    document.getElementById('empty').style.display = 'block';
+    return;
+  }
+
+  /* Atualizar filtros com marcas reais e mostrar toolbar */
+  renderFiltros();
+  renderGrid();
+  document.getElementById('toolbar').style.display = 'flex';
+
+  /* Animação de entrada dos cards */
+  gsap.from('#grid .card', {
+    opacity: 0, y: 20, scale: .94,
+    stagger: { amount:.5, from:'start' },
+    duration: .55,
+    ease: 'back.out(1.3)',
+    delay: .05,
+  });
+}
+
+init();
+</script>
+</body>
+</html>
