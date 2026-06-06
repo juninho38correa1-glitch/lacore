@@ -337,9 +337,9 @@ input[type="checkbox"]:checked::after {
 .table-wrap {
   background: var(--bg-1); border: 1px solid var(--border-1);
   border-radius: var(--r-lg);
+  overflow: hidden;                       /* clip correto nas bordas arredondadas */
   overflow-x: auto; -webkit-overflow-scrolling: touch;
-  /* impede que o swipe horizontal na tabela propague para a página */
-  overscroll-behavior-x: contain;
+  overscroll-behavior-x: contain;        /* swipe não propaga para a página */
   touch-action: pan-x pan-y;
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -362,13 +362,7 @@ tbody tr:hover td { background: rgba(59,130,246,.04) !important; }
 tbody tr:active td { background: rgba(59,130,246,.08) !important; }
 tbody tr[onclick], tbody tr.clickable { cursor: pointer; }
 
-/* Sombra indicadora de scroll no mobile */
 @media (max-width: 639px) {
-  .table-wrap::after {
-    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 28px;
-    background: linear-gradient(to right, transparent, rgba(9,9,11,.85));
-    border-radius: 0 var(--r-lg) var(--r-lg) 0; pointer-events: none; z-index: 1;
-  }
   .table-wrap table { min-width: 560px; }
 }
 
@@ -501,16 +495,11 @@ tbody tr[onclick], tbody tr.clickable { cursor: pointer; }
 }
 
 /* ══════════════════════════════
-   MODAL — bottom sheet mobile + centered desktop
+   MODAL — centralizado em todas as telas
 ══════════════════════════════ */
 .modal-overlay { animation: fadeIn .18s ease both; }
 .modal-box     { animation: modalIn .28s var(--spring) both; }
-
-@media (min-width: 640px) {
-  .modal-overlay { align-items: center !important; padding: 20px !important; }
-  .modal-box     { border-radius: 20px !important; max-height: 88vh !important; }
-  .modal-handle  { display: none !important; }
-}
+.modal-handle  { display: none !important; }
 
 /* ══════════════════════════════
    SIDEBAR — Premium

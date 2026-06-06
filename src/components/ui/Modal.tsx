@@ -36,9 +36,9 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
         backdropFilter: 'blur(8px)',
         zIndex: 50,
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end', /* bottom sheet */
         alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
         overflowY: 'auto',
       }}
     >
@@ -50,19 +50,13 @@ export function Modal({ open, onClose, title, size = 'md', children }: ModalProp
           maxWidth: WIDTHS[size],
           background: 'var(--bg-1)',
           border: '1px solid var(--border-2)',
-          borderRadius: '20px 20px 0 0',
-          boxShadow: '0 -8px 48px rgba(0,0,0,.5)',
+          borderRadius: 20,
+          boxShadow: '0 24px 64px rgba(0,0,0,.6)',
           maxHeight: '88dvh',
           overflowY: 'auto',
           overflowX: 'hidden',
-          /* sobe acima da barra home do iPhone */
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-          marginTop: 'auto',
         }}
       >
-        {/* Drag handle — mobile */}
-        <div className="modal-handle" style={{ width: 36, height: 4, background: 'var(--border-2)', borderRadius: 99, margin: '12px auto 0' }} />
-
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--border-1)' }}>
             <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-1)' }}>{title}</h3>
