@@ -194,6 +194,9 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
 }
 .modal-ov.open .modal-sheet{transform:translateY(0)}
 
+/* Reveal da folha controlado via GSAP (flip-reveal da foto) */
+.modal-sheet.flip-reveal{transition:none;opacity:0}
+
 /* Desktop: modal centralizado na tela (não bottom-sheet) */
 @media(min-width:640px){
   .modal-ov{
@@ -211,19 +214,23 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
     transform:scale(1) translateY(0);
     opacity:1;
   }
+  .modal-ov.open .modal-sheet.flip-reveal{
+    transform:scale(1) translateY(0);
+  }
 }
 
-/* ─── Thumbnails ──────────────────────── */
+/* ─── Thumbnails (interactive-selector: a ativa expande) ──── */
+#thumbs{align-items:stretch}
 .thumb{
-  width:56px;height:56px;border-radius:10px;
-  object-fit:contain;background:var(--bg-2);padding:4px;
+  height:64px;border-radius:10px;
+  object-fit:cover;object-position:center;background:var(--bg-2);
   border:2px solid var(--border);cursor:pointer;flex-shrink:0;
-  transition:border-color .15s,transform .2s var(--spring);
-  /* 44px min touch */
-  min-width:48px;
+  transition:flex-grow .4s var(--spring),opacity .25s,border-color .15s;
+  flex-grow:1;flex-basis:48px;max-width:160px;
+  min-width:48px;opacity:.55;
 }
-.thumb:hover,.thumb:active{transform:scale(1.1)}
-.thumb.sel{border-color:var(--t1)}
+.thumb:hover{opacity:.85}
+.thumb.sel{border-color:var(--t1);flex-grow:4;opacity:1}
 
 /* ─── Parcelas ────────────────────────── */
 .pbtn{
@@ -749,6 +756,7 @@ let compararSet = new Set(); // chaves (encodeURIComponent) dos cards selecionad
 let modalGrupo  = null;
 let modalProd   = null;
 let modalImg    = '';
+let modalCardId = null;
 let parcSel     = 12;
 let simAberto   = false;
 let lboxFotos   = [];
@@ -1280,19 +1288,78 @@ function abrirModalPorChave(cardId) {
   const chave = decodeURIComponent(cardId);
   const grupo = GRUPOS.find(g => g.key === chave);
   if (!grupo) return;
-  modalGrupo = grupo;
-  modalProd  = grupo.rep;
-  modalImg   = (modalProd.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
+  modalGrupo  = grupo;
+  modalProd   = grupo.rep;
+  modalImg    = (modalProd.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
+  modalCardId = cardId;
   parcSel    = 12;
   simAberto  = false;
 
   preencherModal();
   document.body.style.overflow = 'hidden';
-  document.getElementById('modal').classList.add('open');
+
+  const modal = document.getElementById('modal');
+  const sheet = document.querySelector('.modal-sheet');
+  const cardImg = document.querySelector(`.card[data-key="${cardId}"] img`);
+
+  if (cardImg) {
+    // ★ Flip reveal — a foto do card "voa" e cresce até virar a foto do modal
+    const startRect = cardImg.getBoundingClientRect();
+    const clone = cardImg.cloneNode();
+    Object.assign(clone.style, {
+      position:'fixed', top:startRect.top+'px', left:startRect.left+'px',
+      width:startRect.width+'px', height:startRect.height+'px',
+      margin:'0', zIndex:'300', borderRadius:'16px',
+      objectFit:'cover', pointerEvents:'none',
+    });
+    document.body.appendChild(clone);
+
+    sheet.classList.add('flip-reveal');
+    modal.classList.add('open');
+
+    requestAnimationFrame(() => {
+      const targetRect = document.getElementById('foto-wrap').getBoundingClientRect();
+      gsap.to(clone, {
+        top:targetRect.top, left:targetRect.left,
+        width:targetRect.width, height:targetRect.height,
+        objectFit:'contain', duration:.5, ease:'power3.inOut',
+        onComplete: () => clone.remove(),
+      });
+      gsap.to(sheet, { opacity:1, duration:.35, delay:.18, ease:'power2.out',
+        onComplete: () => sheet.classList.remove('flip-reveal') });
+    });
+  } else {
+    modal.classList.add('open');
+  }
 }
 
 function fecharModal() {
-  document.getElementById('modal').classList.remove('open');
+  const modal = document.getElementById('modal');
+  const modalImgEl = document.getElementById('modal-img');
+  const cardImg = modalCardId ? document.querySelector(`.card[data-key="${modalCardId}"] img`) : null;
+
+  if (cardImg && modalImgEl.src) {
+    // ★ Flip reverso — a foto do modal "volta" para o card
+    const startRect = modalImgEl.getBoundingClientRect();
+    const targetRect = cardImg.getBoundingClientRect();
+    const clone = modalImgEl.cloneNode();
+    Object.assign(clone.style, {
+      position:'fixed', top:startRect.top+'px', left:startRect.left+'px',
+      width:startRect.width+'px', height:startRect.height+'px',
+      margin:'0', zIndex:'300', borderRadius:'16px',
+      objectFit:'contain', pointerEvents:'none',
+    });
+    document.body.appendChild(clone);
+
+    gsap.to(clone, {
+      top:targetRect.top, left:targetRect.left,
+      width:targetRect.width, height:targetRect.height,
+      objectFit:'cover', borderRadius:'0px', duration:.4, ease:'power2.inOut',
+      onComplete: () => clone.remove(),
+    });
+  }
+
+  modal.classList.remove('open');
   document.body.style.overflow = '';
 }
 
