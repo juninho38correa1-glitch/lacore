@@ -1030,7 +1030,7 @@ function renderGrid() {
         ${!g.esgotado && g.qtd > 0 && g.qtd <= 2
           ? `<div class="scarcity-badge">
                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c2 2 3 4 3 6a7 7 0 1 1-14 0c0-5 4-7 7-13z"/></svg>
-               ${g.qtd === 1 ? 'Última unidade' : 'Últimas unidades'}
+               Últimas unidades
              </div>`
           : ''}
         ${g.esgotado
@@ -1318,7 +1318,7 @@ function preencherModal() {
   const scarcityEl = document.getElementById('m-scarcity');
   if (!g?.esgotado && g?.qtd > 0 && g.qtd <= 2) {
     scarcityEl.style.display = 'flex';
-    scarcityEl.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline;vertical-align:-1px;margin-right:2px"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c2 2 3 4 3 6a7 7 0 1 1-14 0c0-5 4-7 7-13z"/></svg>${g.qtd === 1 ? 'Última unidade disponível' : 'Últimas unidades disponíveis'}`;
+    scarcityEl.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline;vertical-align:-1px;margin-right:2px"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c2 2 3 4 3 6a7 7 0 1 1-14 0c0-5 4-7 7-13z"/></svg>Últimas unidades disponíveis`;
   } else {
     scarcityEl.style.display = 'none';
   }
