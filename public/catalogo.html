@@ -1252,12 +1252,17 @@ function aplicarBuscaOrdem() {
 
   document.getElementById('empty').style.display = lista.length === 0 ? 'block' : 'none';
 
-  // ★ Anima do estado antigo para a nova posição
+  // ★ FLIP reveal — cards reorganizam com leve elevação e revelação em cascata
   Flip.from(state, {
-    duration: .42,
-    ease: 'power2.inOut',
-    onEnter: els => gsap.fromTo(els, { opacity:0, scale:.93 }, { opacity:1, scale:1, duration:.3, ease:'power2.out' }),
-    onLeave: els => gsap.to(els,    { opacity:0, scale:.93, duration:.2 }),
+    duration: .55,
+    ease: 'power3.inOut',
+    absolute: true,
+    stagger: .035,
+    onEnter: els => gsap.fromTo(els,
+      { opacity:0, scale:.85, y:24 },
+      { opacity:1, scale:1, y:0, duration:.5, stagger:.04, ease:'back.out(1.6)' }),
+    onLeave: els => gsap.to(els,
+      { opacity:0, scale:.85, y:-16, duration:.25, stagger:.02, ease:'power2.in' }),
   });
 }
 
@@ -1591,20 +1596,34 @@ function fecharLightbox() {
   document.body.style.overflow = 'hidden'; // modal ainda está aberto
 }
 
-function atualizarLightbox() {
+function atualizarLightbox(dir) {
   const img = document.getElementById('lbox-img');
-  gsap.fromTo(img, { opacity:.3, scale:.94 }, { opacity:1, scale:1, duration:.3, ease:'power2.out' });
-  img.src = lboxFotos[lboxIdx];
-  img.alt = `${modalProd.marca} ${modalProd.modelo} — foto ${lboxIdx+1}`;
-  document.getElementById('lbox-counter').textContent =
-    lboxFotos.length > 1 ? `${lboxIdx+1} / ${lboxFotos.length}` : '';
-  document.getElementById('lbox-prev').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
-  document.getElementById('lbox-next').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
+  const setInfo = () => {
+    img.alt = `${modalProd.marca} ${modalProd.modelo} — foto ${lboxIdx+1}`;
+    document.getElementById('lbox-counter').textContent =
+      lboxFotos.length > 1 ? `${lboxIdx+1} / ${lboxFotos.length}` : '';
+    document.getElementById('lbox-prev').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
+    document.getElementById('lbox-next').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
+  };
+
+  if (dir) {
+    // ★ Transição "passar o dedo" — foto atual desliza para fora, próxima entra do lado oposto
+    const dist = 70;
+    gsap.to(img, { x: dir > 0 ? -dist : dist, opacity:0, duration:.18, ease:'power2.in', onComplete: () => {
+      img.src = lboxFotos[lboxIdx];
+      setInfo();
+      gsap.fromTo(img, { x: dir > 0 ? dist : -dist, opacity:0 }, { x:0, opacity:1, duration:.34, ease:'power3.out' });
+    }});
+  } else {
+    gsap.fromTo(img, { opacity:.3, scale:.94 }, { opacity:1, scale:1, duration:.3, ease:'power2.out' });
+    img.src = lboxFotos[lboxIdx];
+    setInfo();
+  }
 }
 
 function lboxNav(dir) {
   lboxIdx = (lboxIdx + dir + lboxFotos.length) % lboxFotos.length;
-  atualizarLightbox();
+  atualizarLightbox(dir);
   // Atualiza também a foto selecionada no modal
   modalImg = lboxFotos[lboxIdx];
   document.getElementById('modal-img').src = modalImg;
