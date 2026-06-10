@@ -32,10 +32,29 @@ export default function EstoqueTable() {
   const [precoInput, setPrecoInput] = useState('')
   const [precoOrigem, setPrecoOrigem] = useState<'cost' | 'current'>('cost')
 
+  // Banco de fotos compartilhado por modelo (catalog_id) — todas as unidades do mesmo
+  // modelo enxergam o mesmo conjunto de fotos, independente de qual unidade recebeu o upload
+  const [fotosPorCatalog, setFotosPorCatalog] = useState<Record<string, ProductPhoto[]>>({})
+
   const load = async () => {
     setLoading(true)
     const { data } = await sb.from('products').select('*,photos:product_photos(*)').eq('status', 'ATIVO').order('date_added', { ascending: false })
-    setProds((data || []) as Product[])
+    const lista = (data || []) as Product[]
+    setProds(lista)
+
+    // Pool de fotos por catalog_id (banco compartilhado do modelo)
+    const catalogIds = [...new Set(lista.map(p => p.catalog_id).filter(Boolean))] as string[]
+    if (catalogIds.length) {
+      const { data: fotos } = await sb.from('product_photos').select('*').in('catalog_id', catalogIds).order('order')
+      const pool: Record<string, ProductPhoto[]> = {}
+      ;(fotos || []).forEach((f: ProductPhoto) => {
+        if (!f.catalog_id) return
+        ;(pool[f.catalog_id] ||= []).push(f)
+      })
+      setFotosPorCatalog(pool)
+    } else {
+      setFotosPorCatalog({})
+    }
     setLoading(false)
   }
   useEffect(() => { load() }, [])
@@ -49,7 +68,10 @@ export default function EstoqueTable() {
       map[k].qtd++
       if (!map[k].price && p.price_current) map[k].price = p.price_current
       if (!map[k].cost && p.cost_brl_unit) map[k].cost = p.cost_brl_unit
-      if (p.photos?.length && !map[k].fotos.length) map[k].fotos = p.photos
+      // Prioriza o banco de fotos compartilhado do modelo (catalog_id); fallback para fotos da própria unidade
+      const fotosCompartilhadas = p.catalog_id ? fotosPorCatalog[p.catalog_id] : null
+      if (fotosCompartilhadas?.length) map[k].fotos = fotosCompartilhadas
+      else if (p.photos?.length && !map[k].fotos.length) map[k].fotos = p.photos
     })
     return Object.values(map)
   }
@@ -133,14 +155,15 @@ export default function EstoqueTable() {
           .eq('brand', grupo.brand).eq('model', grupo.model)
           .eq('storage', grupo.storage || '').eq('color', grupo.color || '')
       }
-      // Upload fotos
+      // Upload fotos — vinculadas ao catalog_id (banco de fotos compartilhado por modelo)
+      const offsetOrder = grupo.fotos.length
       for (let i = 0; i < fotoFiles.length; i++) {
         const f = fotoFiles[i]
         const key = `${ids[0]}/${Date.now()}_${i}.${f.name.split('.').pop()}`
         const { data: up } = await sb.storage.from('product-photos').upload(key, f)
         if (up) {
           const { data: { publicUrl } } = sb.storage.from('product-photos').getPublicUrl(key)
-          await sb.from('product_photos').insert({ product_id: ids[0], url: publicUrl, storage_key: key, order: i })
+          await sb.from('product_photos').insert({ product_id: ids[0], catalog_id: catalogId || null, url: publicUrl, storage_key: key, order: offsetOrder + i })
         }
       }
       toast('Grupo atualizado!', 'success')
@@ -176,19 +199,21 @@ export default function EstoqueTable() {
 
   // Abrir edição para produto individual (não grupo)
   const openEditById = (p: Product) => {
-    const g: Grupo = { key: p.id, brand: p.brand, model: p.model, storage: p.storage || '', condition: p.condition || '', items: [p], qtd: 1, price: p.price_current || 0, cost: p.cost_brl_unit || 0, fotos: p.photos || [] }
+    const fotosCompartilhadas = p.catalog_id ? fotosPorCatalog[p.catalog_id] : null
+    const g: Grupo = { key: p.id, brand: p.brand, model: p.model, storage: p.storage || '', condition: p.condition || '', items: [p], qtd: 1, price: p.price_current || 0, cost: p.cost_brl_unit || 0, fotos: (fotosCompartilhadas?.length ? fotosCompartilhadas : p.photos) || [] }
     openEdit(g)
   }
 
   // Remover produto do estoque
   const removerProduto = async (id: string, nome: string) => {
     if (!confirm(`Remover "${nome}" do estoque? Esta ação não pode ser desfeita.`)) return
-    // Remover fotos do storage
-    const { data: fotos } = await sb.from('product_photos').select('storage_key').eq('product_id', id)
+    // Remove apenas fotos exclusivas dessa unidade (sem catalog_id) — fotos do banco
+    // compartilhado do modelo (catalog_id) permanecem para as demais unidades
+    const { data: fotos } = await sb.from('product_photos').select('storage_key').eq('product_id', id).is('catalog_id', null)
     for (const f of (fotos || [])) {
       if (f.storage_key) await sb.storage.from('product-photos').remove([f.storage_key])
     }
-    await sb.from('product_photos').delete().eq('product_id', id)
+    await sb.from('product_photos').delete().eq('product_id', id).is('catalog_id', null)
     await sb.from('products').update({ status: 'AVARIADO' }).eq('id', id)
     toast('Produto removido do estoque', 'info')
     load()

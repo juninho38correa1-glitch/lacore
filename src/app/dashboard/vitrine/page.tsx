@@ -20,7 +20,18 @@ export default function VitrineAdminPage() {
   const load = async () => {
     setLoading(true)
     const { data } = await sb.from('products').select('*,photos:product_photos(*)').eq('status', 'ATIVO').order('brand')
-    setProds((data || []) as Product[])
+    let lista = (data || []) as Product[]
+
+    // Banco de fotos compartilhado por modelo (catalog_id)
+    const catalogIds = [...new Set(lista.map(p => p.catalog_id).filter(Boolean))] as string[]
+    if (catalogIds.length) {
+      const { data: fotos } = await sb.from('product_photos').select('*').in('catalog_id', catalogIds).order('order')
+      const pool: Record<string, typeof lista[number]['photos']> = {}
+      ;(fotos || []).forEach(f => { if (f.catalog_id) (pool[f.catalog_id] ||= []).push(f) })
+      lista = lista.map(p => p.catalog_id && pool[p.catalog_id]?.length ? { ...p, photos: pool[p.catalog_id] } : p)
+    }
+
+    setProds(lista)
     setLoading(false)
   }
   useEffect(() => { load() }, [])

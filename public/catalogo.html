@@ -875,17 +875,14 @@ async function carregarDados() {
 
     if (error) throw error;
 
-    const prodsAtivos = (ativos || []).filter(p => p.catalog_visible !== false);
-    const gruposAtivos = agrupar(prodsAtivos);
-    const chavesAtivas = new Set(gruposAtivos.map(g => `${g.brand}|${g.model}|${g.storage}`));
-
     // 2. Catálogo para esgotados (itens sem estoque ativo)
     const { data: catalogData } = await sb
       .from('product_catalog')
       .select('*')
       .neq('catalog_visible', false);
 
-    // 3. Fotos de produtos esgotados (via catalog_id)
+    // 3. Banco de fotos compartilhado por modelo (catalog_id) — uma foto enviada
+    // para qualquer unidade do modelo aparece para TODAS as unidades, vendidas ou não
     const { data: fotosCatalog } = await sb
       .from('product_photos')
       .select('catalog_id, url, order')
@@ -897,6 +894,16 @@ async function carregarDados() {
       if (!fotosPorCatalog[f.catalog_id]) fotosPorCatalog[f.catalog_id] = [];
       fotosPorCatalog[f.catalog_id].push({ url: f.url, order: f.order });
     });
+
+    // Aplica o banco de fotos compartilhado aos produtos ativos antes de agrupar
+    const prodsAtivos = (ativos || [])
+      .filter(p => p.catalog_visible !== false)
+      .map(p => {
+        const fotos = p.catalog_id ? fotosPorCatalog[p.catalog_id] : null;
+        return fotos?.length ? { ...p, photos: fotos } : p;
+      });
+    const gruposAtivos = agrupar(prodsAtivos);
+    const chavesAtivas = new Set(gruposAtivos.map(g => `${g.brand}|${g.model}|${g.storage}`));
 
     // Fallback: fotos de produtos vendidos com esse catalog_id
     const { data: vendidos } = await sb

@@ -227,10 +227,16 @@ export default function VendasTable() {
 
     const [{ data: logoData }, { data: prodData }] = await Promise.all([
       sb.from('system_config').select('value').eq('key', 'company_logo').single(),
-      sb.from('products').select('brand,model,color,storage,ram,condition,photos:product_photos(url)').eq('id', v.product_id).single(),
+      sb.from('products').select('brand,model,color,storage,ram,condition,catalog_id,photos:product_photos(url)').eq('id', v.product_id).single(),
     ])
     const logoUrl   = logoData?.value || ''
-    const prodPhotos = (prodData?.photos as { url: string }[] | undefined) || []
+    let prodPhotos = (prodData?.photos as { url: string }[] | undefined) || []
+    // Fallback: banco de fotos compartilhado por modelo (catalog_id) — usado quando
+    // a unidade vendida não tinha foto própria, mas outras unidades do modelo têm
+    if (!prodPhotos.length && prodData?.catalog_id) {
+      const { data: fotosCat } = await sb.from('product_photos').select('url').eq('catalog_id', prodData.catalog_id).order('order')
+      prodPhotos = (fotosCat as { url: string }[] | undefined) || []
+    }
     const fmtBRL    = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
     const fmtDate   = (s: string) => { const [y,m,d] = s.substring(0,10).split('-'); return `${d}/${m}/${y}` }
 

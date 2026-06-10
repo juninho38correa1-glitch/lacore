@@ -53,6 +53,7 @@ export interface Product {
 export interface ProductPhoto {
   id: string
   product_id: string
+  catalog_id?: string | null
   url: string
   storage_key: string
   order: number
