@@ -61,28 +61,30 @@ export default function CadastroPage() {
   const openNovo = () => { setForm(emptyForm()); setModal('novo') }
   const openEdit = async (p: CatalogProduct) => {
     setFotoFiles([])
-    // Buscar fotos: 1) vinculadas ao catalog_id direto, 2) dos produtos vinculados por catalog_id
+    // Buscar fotos: 1) vinculadas ao catalog_id direto, 2) de qualquer produto vinculado por catalog_id (ou mesmo brand/model/storage) que tenha fotos
     const [{ data: fotosCat }, { data: prods }] = await Promise.all([
       sb.from('product_photos').select('id,url,storage_key,order').eq('catalog_id', p.id).order('order'),
-      sb.from('products').select('id').eq('catalog_id', p.id).limit(1),
+      sb.from('products').select('id').eq('catalog_id', p.id),
     ])
     let fotosAll = (fotosCat || []) as {id:string;url:string;storage_key:string;order:number}[]
-    if (!fotosAll.length && prods?.length) {
-      // Fallback: fotos do primeiro produto vinculado (product_id)
-      const { data: fotosP } = await sb.from('product_photos')
-        .select('id,url,storage_key,order').eq('product_id', prods[0].id).order('order')
-      fotosAll = (fotosP || []) as {id:string;url:string;storage_key:string;order:number}[]
-    }
-    if (!fotosAll.length) {
-      // Fallback 2: produto cadastrado direto no Estoque (sem vínculo de catalog_id) —
-      // localiza pelo mesmo brand/model/storage e usa as fotos dele
+    let prodIds = (prods || []).map(pr => pr.id)
+    if (!prodIds.length) {
+      // Fallback: produto cadastrado direto no Estoque (sem vínculo de catalog_id) —
+      // localiza pelo mesmo brand/model/storage
       const { data: prodsMatch } = await sb.from('products')
-        .select('id').eq('brand', p.brand).eq('model', p.model).eq('storage', p.storage).limit(1)
-      if (prodsMatch?.length) {
-        const { data: fotosP } = await sb.from('product_photos')
-          .select('id,url,storage_key,order').eq('product_id', prodsMatch[0].id).order('order')
-        fotosAll = (fotosP || []) as {id:string;url:string;storage_key:string;order:number}[]
-      }
+        .select('id').eq('brand', p.brand).eq('model', p.model).eq('storage', p.storage)
+      prodIds = (prodsMatch || []).map(pr => pr.id)
+    }
+    if (!fotosAll.length && prodIds.length) {
+      // Busca fotos de todos os produtos vinculados e usa o primeiro que tiver fotos
+      const { data: fotosP } = await sb.from('product_photos')
+        .select('id,url,storage_key,order,product_id').in('product_id', prodIds).order('order')
+      const porProduto = (fotosP || []).reduce((acc: Record<string, typeof fotosP>, f) => {
+        (acc[f.product_id] ||= []).push(f)
+        return acc
+      }, {})
+      const idComFotos = prodIds.find(id => porProduto[id]?.length)
+      fotosAll = (idComFotos ? porProduto[idComFotos] : []) as {id:string;url:string;storage_key:string;order:number}[]
     }
     setFotosExistentes(fotosAll)
     setForm({
