@@ -199,6 +199,9 @@ export default function CadastroPage() {
           // Atualizar também brand/model/storage/color/condition se mudaram
           brand: form.brand, model: form.model, storage: form.storage,
           color: form.color, condition: form.condition,
+          // Sincronizar visibilidade/descrição do catálogo com o estoque
+          catalog_visible: form.catalog_visible,
+          catalog_description: form.catalog_description || null,
           updated_at: new Date().toISOString(),
         }).eq('catalog_id', catalogId)
 

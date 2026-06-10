@@ -142,16 +142,21 @@ export default function EstoqueTable() {
         updated_at: new Date().toISOString(),
       }).in('id', ids)
 
-      // Sincronizar specs com product_catalog via catalog_id (preciso) ou brand+model fallback
+      // Sincronizar specs + visibilidade/descrição com product_catalog via catalog_id (preciso) ou brand+model fallback
+      const catalogSyncFields = {
+        ...specFields,
+        catalog_visible: editForm.catalog_visible,
+        catalog_description: editForm.catalog_description || null,
+      }
       const catalogId = grupo.items[0]?.catalog_id
       if (catalogId) {
         await sb.from('product_catalog')
-          .update({ ...specFields, updated_at: new Date().toISOString() })
+          .update({ ...catalogSyncFields, updated_at: new Date().toISOString() })
           .eq('id', catalogId)
       } else {
         // Fallback: buscar pelo brand+model+storage+color
         await sb.from('product_catalog')
-          .update({ ...specFields, updated_at: new Date().toISOString() })
+          .update({ ...catalogSyncFields, updated_at: new Date().toISOString() })
           .eq('brand', grupo.brand).eq('model', grupo.model)
           .eq('storage', grupo.storage || '').eq('color', grupo.color || '')
       }
