@@ -832,12 +832,15 @@ function renderSubfiltros() {
 }
 
 function selecionarLinha(id) {
-  const ativando = subFiltroAtual !== id;
+  const anterior = subFiltroAtual;
+  const ativando = anterior !== id;
   subFiltroAtual = ativando ? id : null;
   renderSubfiltros();
   renderBanner();
   aplicarBuscaOrdem();
-  if (ativando) {
+  // Só rola a página ao ativar a partir de "nenhuma linha selecionada".
+  // Trocar entre linhas (Poco <-> Redmi) ou desativar mantém a posição atual.
+  if (ativando && !anterior) {
     requestAnimationFrame(() => {
       const alvo = document.getElementById('linha-banner');
       const target = (alvo && alvo.style.display !== 'none') ? alvo : document.getElementById('grid');
