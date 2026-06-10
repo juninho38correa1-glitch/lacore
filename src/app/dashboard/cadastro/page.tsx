@@ -73,6 +73,17 @@ export default function CadastroPage() {
         .select('id,url,storage_key,order').eq('product_id', prods[0].id).order('order')
       fotosAll = (fotosP || []) as {id:string;url:string;storage_key:string;order:number}[]
     }
+    if (!fotosAll.length) {
+      // Fallback 2: produto cadastrado direto no Estoque (sem vínculo de catalog_id) —
+      // localiza pelo mesmo brand/model/storage e usa as fotos dele
+      const { data: prodsMatch } = await sb.from('products')
+        .select('id').eq('brand', p.brand).eq('model', p.model).eq('storage', p.storage).limit(1)
+      if (prodsMatch?.length) {
+        const { data: fotosP } = await sb.from('product_photos')
+          .select('id,url,storage_key,order').eq('product_id', prodsMatch[0].id).order('order')
+        fotosAll = (fotosP || []) as {id:string;url:string;storage_key:string;order:number}[]
+      }
+    }
     setFotosExistentes(fotosAll)
     setForm({
       brand: p.brand, model: p.model, storage: p.storage, color: p.color, condition: p.condition,
