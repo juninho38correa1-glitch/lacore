@@ -841,7 +841,12 @@ function selecionarLinha(id) {
     requestAnimationFrame(() => {
       const alvo = document.getElementById('linha-banner');
       const target = (alvo && alvo.style.display !== 'none') ? alvo : document.getElementById('grid');
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (target) {
+        const header = document.querySelector('header');
+        const offset = (header ? header.offsetHeight : 0) + 12;
+        const y = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
     });
   }
 }
