@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { sb, fR, fD, fP, dI, ini } from '@/lib/supabase'
 import { TrendingUp, TrendingDown, Package, ShoppingCart, DollarSign, BarChart2, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { SkeletonCard, SkeletonRow } from '@/components/ui/Skeleton'
+import { RevenueChart } from '@/components/RevenueChart'
 
 export default function DashboardPage() {
   const { user, isAdmin } = useAuth()
@@ -33,9 +34,6 @@ export default function DashboardPage() {
   const [vSales, setVSales]   = useState<Record<string, unknown>[]>([])
   const [aReceber, setAReceber] = useState(0)
   const [vencidosParc, setVencidosParc] = useState(0)
-
-  const chartRef  = useRef<HTMLCanvasElement>(null)
-  const chartInst = useRef<unknown>(null)
 
   useEffect(() => {
     if (!user) return
@@ -125,75 +123,6 @@ export default function DashboardPage() {
     } catch (e) { console.error('Dashboard vendedor error:', e) }
     finally { setLoading(false) }
   }
-
-  useEffect(() => {
-    if (!chartData.labels.length || !isAdmin() || !chartRef.current) return
-    const load = async () => {
-      try {
-        if (!(window as Record<string, unknown>).Chart) {
-          const s = document.createElement('script')
-          s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
-          document.head.appendChild(s)
-          await new Promise(res => { s.onload = res })
-        }
-        if (chartInst.current) (chartInst.current as { destroy: () => void }).destroy()
-        const W = window as Record<string, unknown>
-        const Chart = W.Chart as new (el: HTMLCanvasElement, cfg: unknown) => { destroy: () => void }
-        // Lê as CSS vars do design system para manter consistência
-        const cs    = getComputedStyle(document.documentElement)
-        const accent = cs.getPropertyValue('--accent').trim()  || '#3B82F6'
-        const green  = cs.getPropertyValue('--green').trim()   || '#10B981'
-        const tLabel = cs.getPropertyValue('--text-3').trim()  || '#4A566E'
-        const tTick  = cs.getPropertyValue('--text-4').trim()  || '#2E3A4E'
-        const grid   = 'rgba(255,255,255,.035)'
-
-        chartInst.current = new Chart(chartRef.current!, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [
-              { label: 'Faturamento', data: chartData.rev,
-                borderColor: accent, backgroundColor: 'rgba(59,130,246,.07)',
-                tension: .4, fill: true, pointRadius: 3, pointHoverRadius: 5,
-                pointBackgroundColor: accent, borderWidth: 1.5 },
-              { label: 'Lucro',       data: chartData.prf,
-                borderColor: green,  backgroundColor: 'rgba(16,185,129,.06)',
-                tension: .4, fill: true, pointRadius: 3, pointHoverRadius: 5,
-                pointBackgroundColor: green, borderWidth: 1.5 },
-            ],
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-              legend: { labels: { color: tLabel, font: { size: 11 }, boxWidth: 10, padding: 14 } },
-              tooltip: {
-                backgroundColor: 'rgba(12,14,20,.92)',
-                borderColor: 'rgba(255,255,255,.07)',
-                borderWidth: 1,
-                titleColor: '#f0f4fa',
-                bodyColor: tLabel,
-                padding: 10,
-                callbacks: {
-                  label: (ctx: Record<string,unknown>) => {
-                    const v = Number(ctx.raw)
-                    return ` ${ctx.dataset && (ctx.dataset as Record<string,unknown>).label}: R$ ${v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)}`
-                  }
-                }
-              }
-            },
-            scales: {
-              x: { ticks: { color: tTick, font: { size: 10 } }, grid: { color: grid }, border: { display: false } },
-              y: { ticks: { color: tTick, font: { size: 10 },
-                            callback: (v: unknown) => 'R$' + (Number(v) >= 1000 ? (Number(v)/1000).toFixed(0)+'k' : String(v)) },
-                   grid: { color: grid }, border: { display: false } },
-            },
-          },
-        })
-      } catch(e) { console.error('Chart error:', e) }
-    }
-    load()
-  }, [chartData, isAdmin])
 
   const delta = (c: number, p: number) => {
     if (!p) return null
@@ -308,7 +237,7 @@ export default function DashboardPage() {
       <div className="chart-layout" style={{ marginBottom: 16 }}>
         <div className="card">
           <p style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-4)', marginBottom: 14 }}>Faturamento — Últimos 6 Meses</p>
-          <div style={{ height: 160 }}><canvas ref={chartRef} /></div>
+          <div style={{ height: 160 }}>{chartData.labels.length > 0 && <RevenueChart data={chartData} />}</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ flex: 1 }}>
