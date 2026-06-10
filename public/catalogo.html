@@ -371,6 +371,58 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
 .linha-tagline{ font-family:'Sora',sans-serif; font-size:clamp(18px,3vw,26px); font-weight:800; letter-spacing:-.02em; color:#fff; margin-bottom:8px; line-height:1.2 }
 .linha-desc{ font-size:12.5px; color:rgba(255,255,255,.55); line-height:1.6; max-width:440px }
 
+/* ─── Selo de garantia no card ─────────── */
+.warranty-badge{
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:9.5px; font-weight:700; color:#34d399; letter-spacing:.02em;
+  background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.2);
+  padding:3px 8px; border-radius:99px; white-space:nowrap;
+}
+
+/* ─── Comparador ─────────────────────── */
+.compare-toggle{
+  position:absolute; top:11px; left:11px; z-index:2;
+  width:30px; height:30px; border-radius:9px;
+  background:rgba(9,9,11,.6); backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.12); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all .2s var(--spring);
+}
+.compare-toggle:hover{ border-color:rgba(255,255,255,.3); transform:scale(1.06) }
+.compare-toggle.on{ background:var(--green); border-color:var(--green); color:#09090b; transform:scale(1.04) }
+.compare-toggle:active{ transform:scale(.92) }
+
+.compare-bar{
+  position:fixed; left:50%; bottom:18px; z-index:60;
+  transform:translate(-50%,160%);
+  background:var(--bg-1); border:1px solid var(--border2);
+  border-radius:18px; box-shadow:0 8px 0 rgba(0,0,0,.5),0 16px 40px rgba(0,0,0,.4);
+  padding:10px 14px; display:flex; align-items:center; gap:12px;
+  max-width:calc(100vw - 32px); transition:transform .35s var(--spring);
+}
+.compare-bar.show{ transform:translate(-50%,0) }
+.compare-thumbs{ display:flex; gap:6px }
+.compare-thumb{ width:36px; height:36px; border-radius:8px; object-fit:cover; background:var(--bg-2); border:1px solid var(--border) }
+.compare-cta{
+  background:var(--green); color:#09090b; font-weight:800; font-size:12.5px;
+  border:none; border-radius:99px; padding:9px 16px; cursor:pointer;
+  transition:all .2s var(--spring); white-space:nowrap;
+}
+.compare-cta:disabled{ opacity:.4; cursor:not-allowed }
+.compare-cta:not(:disabled):hover{ transform:scale(1.04) }
+.compare-clear{
+  background:none; border:none; color:var(--t4); cursor:pointer;
+  width:30px; height:30px; border-radius:99px; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.compare-clear:hover{ color:#f87171; background:rgba(248,113,113,.1) }
+
+.compare-table{ width:100%; border-collapse:collapse; font-size:12.5px }
+.compare-table th, .compare-table td{ padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top }
+.compare-table th{ position:sticky; top:0; background:var(--bg-1); z-index:1 }
+.compare-table td:first-child, .compare-table th:first-child{ color:var(--t4); font-weight:600; white-space:nowrap; position:sticky; left:0; background:var(--bg-1); z-index:1 }
+.compare-img{ width:64px; height:64px; object-fit:cover; border-radius:10px; background:var(--bg-2); border:1px solid var(--border); margin-bottom:6px }
+
 /* ─── Reduced motion ─────────────────── */
 @media(prefers-reduced-motion:reduce){
   *,::before,::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
@@ -616,6 +668,32 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   <div id="lbox-counter" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-size:12px;color:rgba(255,255,255,.5);font-family:'Inter',sans-serif"></div>
 </div>
 
+<!-- ── BARRA FLUTUANTE DE COMPARAÇÃO ────────────── -->
+<div class="compare-bar" id="compare-bar">
+  <div class="compare-thumbs" id="compare-thumbs"></div>
+  <span id="compare-count" style="font-size:12.5px;color:var(--t2);white-space:nowrap"></span>
+  <button class="compare-cta" id="compare-cta" onclick="abrirComparador()">Comparar</button>
+  <button class="compare-clear" onclick="limparComparador()" aria-label="Limpar seleção">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+  </button>
+</div>
+
+<!-- ── MODAL COMPARADOR ─────────────────────────── -->
+<div class="modal-ov" id="compare-modal" onclick="fecharComparador()" role="dialog" aria-modal="true" aria-label="Comparar produtos">
+  <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:760px">
+    <div style="width:44px;height:5px;background:var(--bg-3);border-radius:99px;margin:0 auto 18px" aria-hidden="true"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 class="sora" style="font-size:17px;font-weight:800;color:var(--t1)">Comparar modelos</h2>
+      <button onclick="fecharComparador()" style="background:var(--bg-2);border:1px solid var(--border);border-radius:99px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--t3);cursor:pointer">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="overflow:auto;max-height:70dvh;border:1px solid var(--border);border-radius:14px">
+      <table class="compare-table" id="compare-table"></table>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════
      SCRIPT
 ════════════════════════════════════════════════ -->
@@ -651,6 +729,7 @@ let GRUPOS      = [];  // grupos carregados do Supabase
 let MARCAS      = ['Todos'];
 let filtroAtual = 'Todos';
 let subFiltroAtual = null; // id da linha (POCO, Redmi, iPhone...) selecionada
+let compararSet = new Set(); // chaves (encodeURIComponent) dos cards selecionados p/ comparar
 let modalGrupo  = null;
 let modalProd   = null;
 let modalImg    = '';
@@ -737,10 +816,18 @@ function renderSubfiltros() {
 }
 
 function selecionarLinha(id) {
-  subFiltroAtual = subFiltroAtual === id ? null : id;
+  const ativando = subFiltroAtual !== id;
+  subFiltroAtual = ativando ? id : null;
   renderSubfiltros();
   renderBanner();
   aplicarBuscaOrdem();
+  if (ativando) {
+    requestAnimationFrame(() => {
+      const alvo = document.getElementById('linha-banner');
+      const target = (alvo && alvo.style.display !== 'none') ? alvo : document.getElementById('grid');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 function renderBanner() {
@@ -899,6 +986,12 @@ function renderGrid() {
 
       <!-- Foto -->
       <div style="position:relative;overflow:hidden;aspect-ratio:1;background:var(--bg-2)">
+        <button class="compare-toggle ${compararSet.has(cardId) ? 'on' : ''}" data-cid="${cardId}"
+                onclick="toggleComparar('${cardId}', event)"
+                aria-pressed="${compararSet.has(cardId)}"
+                aria-label="Adicionar ${p.brand} ${p.model} à comparação">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h12M3 18h7"/></svg>
+        </button>
         ${foto
           ? `<img src="${foto}" alt="${p.brand} ${p.model}" loading="lazy"
                   style="width:100%;height:100%;object-fit:cover;transition:transform .45s var(--soft)"
@@ -939,7 +1032,11 @@ function renderGrid() {
       <div style="padding:13px 14px 14px">
         <p style="font-size:10px;color:var(--t4);font-weight:600;letter-spacing:.05em;margin-bottom:3px;text-transform:uppercase">${p.brand}</p>
         <p class="sora" style="font-size:14px;font-weight:700;color:var(--t1);line-height:1.3;margin-bottom:2px">${p.model}${p.storage ? ' '+p.storage : ''}</p>
-        <p style="font-size:11px;color:var(--t3);margin-bottom:11px">${g.esgotado ? '<span style="color:#f87171;font-weight:600">Esgotado</span>' : (g.cores.length > 1 ? g.cores.slice(0,3).join(' · ')+(g.cores.length>3?'…':'') : (p.color||''))}</p>
+        <p style="font-size:11px;color:var(--t3);margin-bottom:8px">${g.esgotado ? '<span style="color:#f87171;font-weight:600">Esgotado</span>' : (g.cores.length > 1 ? g.cores.slice(0,3).join(' · ')+(g.cores.length>3?'…':'') : (p.color||''))}</p>
+        ${!g.esgotado ? `<div class="warranty-badge" style="margin-bottom:9px">
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          90 dias de garantia
+        </div>` : ''}
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:6px">
           <div>
             <p class="sora" style="font-size:19px;font-weight:800;color:${g.esgotado?'var(--t3)':'var(--t1)'};letter-spacing:-.02em;line-height:1">${preco ? fmt(preco) : 'Consulte'}</p>
@@ -956,6 +1053,106 @@ function renderGrid() {
       </div>
     </div>`;
   }).join('');
+}
+
+/* ════════════════════════════════════════
+   COMPARADOR DE MODELOS
+════════════════════════════════════════ */
+const CAMPOS_COMPARAR = [
+  ['Preço',            (p,g) => p.price_current ? fmt(p.price_current) : 'Consulte'],
+  ['Condição',         (p)   => p.condition || 'Seminovo'],
+  ['Armazenamento',    (p,g) => g.storage || '—'],
+  ['Tela',             (p)   => p.screen || '—'],
+  ['Processador',      (p)   => p.processor || '—'],
+  ['RAM',              (p)   => p.ram || '—'],
+  ['Câmera traseira',  (p)   => p.camera_main || '—'],
+  ['Câmera frontal',   (p)   => p.camera_front || '—'],
+  ['Bateria',          (p)   => p.battery || '—'],
+  ['Carregamento',     (p)   => p.charging || '—'],
+  ['NFC',              (p)   => p.nfc ? 'Sim' : 'Não'],
+  ['Sistema',          (p)   => p.os || '—'],
+  ['Garantia',         ()    => '90 dias'],
+];
+
+function toggleComparar(cardId, ev) {
+  if (ev) ev.stopPropagation();
+  if (compararSet.has(cardId)) {
+    compararSet.delete(cardId);
+  } else {
+    if (compararSet.size >= 3) {
+      const btn = document.querySelector(`.compare-toggle[data-cid="${cardId}"]`);
+      if (btn) gsap.fromTo(btn, { x: -3 }, { x: 0, duration: .35, ease: 'elastic.out(1,.3)' });
+      return;
+    }
+    compararSet.add(cardId);
+  }
+  document.querySelectorAll(`.compare-toggle[data-cid="${cardId}"]`).forEach(btn => {
+    btn.classList.toggle('on', compararSet.has(cardId));
+    btn.setAttribute('aria-pressed', compararSet.has(cardId));
+  });
+  renderCompareBar();
+}
+
+function limparComparador() {
+  compararSet.clear();
+  document.querySelectorAll('.compare-toggle.on').forEach(btn => {
+    btn.classList.remove('on');
+    btn.setAttribute('aria-pressed', 'false');
+  });
+  renderCompareBar();
+}
+
+function renderCompareBar() {
+  const bar = document.getElementById('compare-bar');
+  const n = compararSet.size;
+  if (n === 0) { bar.classList.remove('show'); return; }
+  bar.classList.add('show');
+
+  const thumbs = [...compararSet].map(cid => {
+    const g = GRUPOS.find(x => encodeURIComponent(x.key) === cid);
+    const foto = (g?.rep?.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
+    return foto ? `<img class="compare-thumb" src="${foto}" alt="${g?.rep?.model||''}"/>` : `<div class="compare-thumb"></div>`;
+  }).join('');
+  document.getElementById('compare-thumbs').innerHTML = thumbs;
+  document.getElementById('compare-count').textContent = `${n}/3 selecionado${n>1?'s':''}`;
+  document.getElementById('compare-cta').disabled = n < 2;
+}
+
+function abrirComparador() {
+  if (compararSet.size < 2) return;
+  const grupos = [...compararSet]
+    .map(cid => GRUPOS.find(x => encodeURIComponent(x.key) === cid))
+    .filter(Boolean);
+  if (grupos.length < 2) return;
+
+  let html = '<thead><tr><th></th>';
+  grupos.forEach(g => {
+    const p = g.rep;
+    const foto = (p.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
+    html += `<th>
+      ${foto ? `<img class="compare-img" src="${foto}" alt="${p.model}"/>` : ''}
+      <p class="sora" style="font-size:12.5px;font-weight:800;color:var(--t1);line-height:1.25">${p.brand} ${p.model}${p.storage ? ' '+p.storage : ''}</p>
+    </th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  CAMPOS_COMPARAR.forEach(([label, get]) => {
+    const valores = grupos.map(g => get(g.rep, g));
+    if (valores.every(v => v === '—')) return;
+    html += `<tr><td>${label}</td>`;
+    valores.forEach(v => { html += `<td>${v}</td>`; });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+
+  document.getElementById('compare-table').innerHTML = html;
+  document.body.style.overflow = 'hidden';
+  document.getElementById('compare-modal').classList.add('open');
+}
+
+function fecharComparador() {
+  document.getElementById('compare-modal').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 /* ════════════════════════════════════════
