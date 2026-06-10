@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Package, Edit2, Camera, Sparkles, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
+import { Search, Plus, Package, Edit2, Camera, Sparkles, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { sb, fR, fD, dI, ini, callFn } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
@@ -112,6 +112,17 @@ export default function EstoqueTable() {
     }
     toast('Foto removida', 'info')
     load()
+  }
+
+  const moverFoto = async (index: number, dir: -1 | 1) => {
+    if (!editModal.grupo) return
+    const fotos = [...editModal.grupo.fotos]
+    const j = index + dir
+    if (j < 0 || j >= fotos.length) return
+    ;[fotos[index], fotos[j]] = [fotos[j], fotos[index]]
+    const reordenadas = fotos.map((f, i) => ({ ...f, order: i }))
+    setEditModal(m => m.grupo ? { grupo: { ...m.grupo!, fotos: reordenadas } } : m)
+    await Promise.all(reordenadas.map(f => sb.from('product_photos').update({ order: f.order }).eq('id', f.id)))
   }
 
   const saveEdit = async () => {
@@ -344,7 +355,7 @@ export default function EstoqueTable() {
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">🖼 Fotos</p>
             <div className="flex gap-2 flex-wrap">
-              {editModal.grupo?.fotos.map((f, i) => (
+              {editModal.grupo?.fotos.map((f, i, arr) => (
                 <div key={i} style={{ position: 'relative' }}>
                   <img src={f.url} style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border-1)' }} />
                   <button
@@ -359,6 +370,17 @@ export default function EstoqueTable() {
                       lineHeight: 1,
                     }}
                   >✕</button>
+                  {i > 0 && (
+                    <button onClick={() => moverFoto(i, -1)} title="Mover para esquerda" style={{ position: 'absolute', bottom: -6, left: -6, width: 20, height: 20, borderRadius: 99, background: 'var(--bg-2)', border: '1px solid var(--border-1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ChevronLeft size={12} />
+                    </button>
+                  )}
+                  {i < arr.length - 1 && (
+                    <button onClick={() => moverFoto(i, 1)} title="Mover para direita" style={{ position: 'absolute', bottom: -6, right: -6, width: 20, height: 20, borderRadius: 99, background: 'var(--bg-2)', border: '1px solid var(--border-1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ChevronRight size={12} />
+                    </button>
+                  )}
+                  {i === 0 && <span style={{ position: 'absolute', top: -6, left: -6, fontSize: 9, fontWeight: 700, background: 'var(--accent)', color: '#fff', borderRadius: 99, padding: '1px 5px' }}>Capa</span>}
                 </div>
               ))}
               <label className="w-20 h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-500/50 transition-colors">

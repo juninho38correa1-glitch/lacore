@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Plus, Search, Edit2, Trash2, Sparkles, Camera, Eye, EyeOff } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Sparkles, Camera, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react'
 import { sb, fR } from '@/lib/supabase'
 import { toast } from '@/components/ui/Toast'
 import { Modal } from '@/components/ui/Modal'
@@ -135,6 +135,16 @@ export default function CadastroPage() {
     await sb.from('product_photos').delete().eq('id', foto.id)
     setFotosExistentes(prev => prev.filter(f => f.id !== foto.id))
     toast('Foto removida', 'info')
+  }
+
+  const moverFotoCatalog = async (index: number, dir: -1 | 1) => {
+    const fotos = [...fotosExistentes]
+    const j = index + dir
+    if (j < 0 || j >= fotos.length) return
+    ;[fotos[index], fotos[j]] = [fotos[j], fotos[index]]
+    const reordenadas = fotos.map((f, i) => ({ ...f, order: i }))
+    setFotosExistentes(reordenadas)
+    await Promise.all(reordenadas.map(f => sb.from('product_photos').update({ order: f.order }).eq('id', f.id)))
   }
 
   const salvar = async () => {
@@ -341,10 +351,21 @@ export default function CadastroPage() {
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">🖼 Fotos</p>
             <div className="flex gap-2 flex-wrap">
-              {fotosExistentes.map((f, i) => (
+              {fotosExistentes.map((f, i, arr) => (
                 <div key={i} style={{ position: 'relative' }}>
                   <img src={f.url} style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border-1)' }} />
                   <button onClick={() => removerFotoCatalog(f)} style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: 99, background: 'var(--red)', border: '2px solid var(--bg-1)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+                  {i > 0 && (
+                    <button onClick={() => moverFotoCatalog(i, -1)} title="Mover para esquerda" style={{ position: 'absolute', bottom: -6, left: -6, width: 20, height: 20, borderRadius: 99, background: 'var(--bg-2)', border: '1px solid var(--border-1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ChevronLeft size={12} />
+                    </button>
+                  )}
+                  {i < arr.length - 1 && (
+                    <button onClick={() => moverFotoCatalog(i, 1)} title="Mover para direita" style={{ position: 'absolute', bottom: -6, right: -6, width: 20, height: 20, borderRadius: 99, background: 'var(--bg-2)', border: '1px solid var(--border-1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ChevronRight size={12} />
+                    </button>
+                  )}
+                  {i === 0 && <span style={{ position: 'absolute', top: -6, left: -6, fontSize: 9, fontWeight: 700, background: 'var(--accent)', color: '#fff', borderRadius: 99, padding: '1px 5px' }}>Capa</span>}
                 </div>
               ))}
               <label className="w-20 h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-500/50 transition-colors">
