@@ -97,6 +97,17 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   border:1px solid rgba(245,158,11,.25);
   font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;
 }
+.scarcity-badge{
+  position:absolute;top:11px;left:11px;
+  background:rgba(220,38,38,.9);color:#fff;
+  font-size:9px;font-weight:800;padding:3px 8px;border-radius:99px;
+  letter-spacing:.04em;display:flex;align-items:center;gap:4px;
+  animation:pulse-scarcity 1.8s ease-in-out infinite;
+}
+@keyframes pulse-scarcity{
+  0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}
+  50%{box-shadow:0 0 0 5px rgba(220,38,38,0)}
+}
 .esgotado-ov{
   position:absolute;inset:0;
   background:rgba(0,0,0,.52);
@@ -573,6 +584,11 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
       <span id="m-cond" style="font-size:10.5px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--t3);display:none"></span>
     </div>
 
+    <!-- Escassez -->
+    <p id="m-scarcity" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:800;color:#f87171;letter-spacing:.04em;margin-bottom:6px">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline;vertical-align:-1px;margin-right:2px"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c2 2 3 4 3 6a7 7 0 1 1-14 0c0-5 4-7 7-13z"/></svg>
+    </p>
+
     <!-- Preço -->
     <p id="m-preco" class="sora" style="font-size:30px;font-weight:900;color:var(--t1);letter-spacing:-.03em;margin-bottom:3px"></p>
     <p id="m-parc-prev" style="font-size:12px;color:var(--t3);margin-bottom:18px"></p>
@@ -1011,6 +1027,12 @@ function renderGrid() {
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(9,9,11,.3) 0%,transparent 60%)" aria-hidden="true"></div>
         ${p.catalog_highlight && !p.catalog_label ? `<div style="position:absolute;top:11px;right:11px;background:rgba(99,102,241,.85);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.05em">DESTAQUE</div>` : ''}
         ${p.catalog_label    ? `<div class="label-badge">${p.catalog_label}</div>` : ''}
+        ${!g.esgotado && g.qtd > 0 && g.qtd <= 2
+          ? `<div class="scarcity-badge">
+               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c2 2 3 4 3 6a7 7 0 1 1-14 0c0-5 4-7 7-13z"/></svg>
+               ${g.qtd === 1 ? 'Última unidade' : 'Últimas unidades'}
+             </div>`
+          : ''}
         ${g.esgotado
           ? `<div class="esgotado-ov" aria-hidden="true"><div class="esgotado-faixa">ESGOTADO</div></div>`
           : (fotos.length > 1 ? `<div style="position:absolute;bottom:10px;right:10px;background:rgba(9,9,11,.75);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:4px 9px;font-size:9px;color:var(--t3)">${fotos.length} fotos</div>` : '')
@@ -1291,6 +1313,15 @@ function preencherModal() {
   document.getElementById('m-marca').textContent  = (p.brand||'').toUpperCase();
   document.getElementById('m-title').textContent  = `${p.model}${p.storage ? ' '+p.storage : ''}${p.color ? ' — '+p.color : ''}`;
   document.getElementById('m-sub').textContent    = [p.storage, p.color, g?.cores?.length > 1 ? `${g.cores.length} cores` : ''].filter(Boolean).join(' · ');
+
+  /* escassez */
+  const scarcityEl = document.getElementById('m-scarcity');
+  if (!g?.esgotado && g?.qtd > 0 && g.qtd <= 2) {
+    scarcityEl.style.display = 'flex';
+    scarcityEl.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:inline;vertical-align:-1px;margin-right:2px"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c2 2 3 4 3 6a7 7 0 1 1-14 0c0-5 4-7 7-13z"/></svg>${g.qtd === 1 ? 'Última unidade disponível' : 'Últimas unidades disponíveis'}`;
+  } else {
+    scarcityEl.style.display = 'none';
+  }
 
   const condEl  = document.getElementById('m-cond');
   const cond    = p.condition || 'Seminovo';
