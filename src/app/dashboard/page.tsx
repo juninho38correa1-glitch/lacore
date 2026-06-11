@@ -210,8 +210,8 @@ export default function DashboardPage() {
 
       <div className="grid-kpi" style={{ marginBottom: 20 }}>
         {[
-          { l: 'Faturamento',   v: fR(rev),        c: 'var(--accent)',  Icon: DollarSign,   d: delta(rev,  lrev), href: '/dashboard/relatorios' },
-          { l: 'Lucro',         v: fR(prf),        c: 'var(--green)',   Icon: TrendingUp,   d: delta(prf,  lprf), href: '/dashboard/relatorios' },
+          { l: 'Faturamento',   v: fR(rev),        c: 'var(--accent)',  Icon: DollarSign,   d: delta(rev,  lrev), href: '/dashboard/vendas' },
+          { l: 'Lucro',         v: fR(prf),        c: 'var(--green)',   Icon: TrendingUp,   d: delta(prf,  lprf), href: '/dashboard/vendas' },
           { l: 'Margem Média',  v: fP(mg),         c: 'var(--yellow)',  Icon: BarChart2,    d: null },
           { l: 'Vendas',        v: salesCount,      c: 'var(--purple)',  Icon: ShoppingCart, d: null, href: '/dashboard/vendas' },
           { l: 'Em Estoque',    v: stockCount,      c: 'var(--accent)',  Icon: Package,      d: null, href: '/dashboard/estoque' },

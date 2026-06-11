@@ -145,7 +145,7 @@ export default function LoginPage() {
             </form>
           </div>
 
-          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11.5, color: 'var(--text-4)' }}>LACORE Store · Sistema de Gestão</p>
+          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11.5, color: 'var(--text-4)' }}>Lacore Store · Sistema de Gestão</p>
         </div>
       </section>
     </main>
