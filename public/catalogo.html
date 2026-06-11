@@ -173,7 +173,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   align-items:flex-end;
   justify-content:center;
   padding-bottom:max(24px, env(safe-area-inset-bottom,0));
-  opacity:0;pointer-events:none;transition:opacity .22s;
+  opacity:0;pointer-events:none;
 }
 .modal-ov.open{opacity:1;pointer-events:all}
 
@@ -186,16 +186,10 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   border-radius:24px 24px 20px 20px; /* arredondado em todas as pontas */
   padding:12px 16px calc(24px + env(safe-area-inset-bottom,0));
   max-height:88dvh;overflow-y:auto;overflow-x:hidden;
-  transform:translateY(110%);
-  transition:transform .45s var(--soft);
   box-shadow:0 -12px 50px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
 }
-.modal-ov.open .modal-sheet{transform:translateY(0)}
-
-/* Reveal da folha controlado via GSAP (flip-reveal da foto) */
-.modal-sheet.flip-reveal{transition:none;opacity:0}
 
 /* Desktop: modal centralizado na tela (não bottom-sheet) */
 @media(min-width:640px){
@@ -206,16 +200,6 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   .modal-sheet{
     border-radius:24px;
     max-height:90dvh;
-    transform:scale(.94) translateY(16px);
-    transition:transform .35s var(--soft), opacity .25s;
-    opacity:0;
-  }
-  .modal-ov.open .modal-sheet{
-    transform:scale(1) translateY(0);
-    opacity:1;
-  }
-  .modal-ov.open .modal-sheet.flip-reveal{
-    transform:scale(1) translateY(0);
   }
 }
 
@@ -752,7 +736,6 @@ let compararSet = new Set(); // chaves (encodeURIComponent) dos cards selecionad
 let modalGrupo  = null;
 let modalProd   = null;
 let modalImg    = '';
-let modalCardId = null;
 let parcSel     = 12;
 let simAberto   = false;
 let lboxFotos   = [];
@@ -1289,75 +1272,16 @@ function abrirModalPorChave(cardId) {
   modalGrupo  = grupo;
   modalProd   = grupo.rep;
   modalImg    = (modalProd.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
-  modalCardId = cardId;
   parcSel    = 12;
   simAberto  = false;
 
   preencherModal();
   document.body.style.overflow = 'hidden';
-
-  const modal = document.getElementById('modal');
-  const sheet = document.querySelector('.modal-sheet');
-  const cardImg = document.querySelector(`.card[data-key="${cardId}"] img`);
-
-  if (cardImg) {
-    // ★ Flip reveal — a foto do card "voa" e cresce até virar a foto do modal
-    const startRect = cardImg.getBoundingClientRect();
-    const clone = cardImg.cloneNode();
-    Object.assign(clone.style, {
-      position:'fixed', top:startRect.top+'px', left:startRect.left+'px',
-      width:startRect.width+'px', height:startRect.height+'px',
-      margin:'0', zIndex:'300', borderRadius:'16px',
-      objectFit:'cover', pointerEvents:'none',
-    });
-    document.body.appendChild(clone);
-
-    sheet.classList.add('flip-reveal');
-    modal.classList.add('open');
-
-    requestAnimationFrame(() => {
-      const targetRect = document.getElementById('foto-wrap').getBoundingClientRect();
-      gsap.to(clone, {
-        top:targetRect.top, left:targetRect.left,
-        width:targetRect.width, height:targetRect.height,
-        objectFit:'contain', duration:.5, ease:'power3.inOut',
-        onComplete: () => clone.remove(),
-      });
-      gsap.to(sheet, { opacity:1, duration:.35, delay:.18, ease:'power2.out',
-        onComplete: () => sheet.classList.remove('flip-reveal') });
-    });
-  } else {
-    modal.classList.add('open');
-  }
+  document.getElementById('modal').classList.add('open');
 }
 
 function fecharModal() {
-  const modal = document.getElementById('modal');
-  const modalImgEl = document.getElementById('modal-img');
-  const cardImg = modalCardId ? document.querySelector(`.card[data-key="${modalCardId}"] img`) : null;
-
-  if (cardImg && modalImgEl.src) {
-    // ★ Flip reverso — a foto do modal "volta" para o card
-    const startRect = modalImgEl.getBoundingClientRect();
-    const targetRect = cardImg.getBoundingClientRect();
-    const clone = modalImgEl.cloneNode();
-    Object.assign(clone.style, {
-      position:'fixed', top:startRect.top+'px', left:startRect.left+'px',
-      width:startRect.width+'px', height:startRect.height+'px',
-      margin:'0', zIndex:'300', borderRadius:'16px',
-      objectFit:'contain', pointerEvents:'none',
-    });
-    document.body.appendChild(clone);
-
-    gsap.to(clone, {
-      top:targetRect.top, left:targetRect.left,
-      width:targetRect.width, height:targetRect.height,
-      objectFit:'cover', borderRadius:'0px', duration:.4, ease:'power2.inOut',
-      onComplete: () => clone.remove(),
-    });
-  }
-
-  modal.classList.remove('open');
+  document.getElementById('modal').classList.remove('open');
   document.body.style.overflow = '';
 }
 
