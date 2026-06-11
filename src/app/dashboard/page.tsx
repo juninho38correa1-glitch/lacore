@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<{ labels: string[]; rev: number[]; prf: number[] }>({ labels: [], rev: [], prf: [] })
   const [extratoSales, setExtratoSales] = useState<Record<string, unknown>[]>([])
   const [extratoOpen, setExtratoOpen] = useState<'faturamento' | 'lucro' | null>(null)
-  const [topProducts, setTopProducts] = useState<{ brand: string; model: string; color: string; qtd: number }[]>([])
+  const [topProducts, setTopProducts] = useState<{ brand: string; model: string; qtd: number }[]>([])
 
   // Vendedor stats
   const [vRev, setVRev]       = useState(0)
@@ -75,13 +75,13 @@ export default function DashboardPage() {
       setRecent((s3.data || []) as Record<string, unknown>[])
       setExtratoSales([...thisMo].sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()))
 
-      // Top 5 produtos mais vendidos no mês
-      const prodMap = new Map<string, { brand: string; model: string; color: string; qtd: number }>()
+      // Top 5 produtos mais vendidos no mês (agrupado por modelo, ignorando cor/armazenamento)
+      const prodMap = new Map<string, { brand: string; model: string; qtd: number }>()
       thisMo.forEach(s => {
         const p = s.product as Record<string, string> | null
         if (!p) return
-        const key = `${p.brand}|${p.model}|${p.color}`
-        const cur = prodMap.get(key) || { brand: p.brand, model: p.model, color: p.color, qtd: 0 }
+        const key = `${p.brand}|${p.model}`
+        const cur = prodMap.get(key) || { brand: p.brand, model: p.model, qtd: 0 }
         cur.qtd += 1
         prodMap.set(key, cur)
       })
@@ -285,7 +285,6 @@ export default function DashboardPage() {
                   <span style={{ fontSize: 10.5, fontWeight: 700, width: 14, color: rankColors[i] || 'var(--text-4)' }}>{i + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.brand} {p.model}</p>
-                    <p style={{ fontSize: 10, color: 'var(--text-4)' }}>{p.color}</p>
                   </div>
                   <span className="mono" style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{p.qtd}x</span>
                 </div>

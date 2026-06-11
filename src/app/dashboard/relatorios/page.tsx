@@ -103,26 +103,26 @@ export default function RelatoriosPage() {
         </table>`
       } else if (tipo === 'ranking') {
         titulo = 'Top 5 Mais Vendidos'
-        const { data, error } = await sb.from('sales').select('product_id,total_price,product:products(brand,model,color)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim)
+        const { data, error } = await sb.from('sales').select('product_id,total_price,product:products(brand,model)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim)
         if (error) throw error
         const sales = data || []
-        const grouped = new Map<string, { brand: string; model: string; color: string; qtd: number; total: number }>()
+        const grouped = new Map<string, { brand: string; model: string; qtd: number; total: number }>()
         sales.forEach((s) => {
           const rec = s as Record<string, unknown>
           const p = rec.product as Record<string, string> | null
-          const pid = String(rec.product_id || '')
-          if (!pid) return
-          const cur = grouped.get(pid) || { brand: p?.brand || '—', model: p?.model || '', color: p?.color || '', qtd: 0, total: 0 }
+          if (!p) return
+          const key = `${p.brand}|${p.model}`
+          const cur = grouped.get(key) || { brand: p.brand || '—', model: p.model || '', qtd: 0, total: 0 }
           cur.qtd += 1
           cur.total += Number(rec.total_price) || 0
-          grouped.set(pid, cur)
+          grouped.set(key, cur)
         })
         const ranking = [...grouped.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 5)
         subtitulo += ` · ${sales.length} vendas`
         const medalColors = ['#f59e0b', '#94a3b8', '#b45309', '#64748b', '#64748b']
         content = `<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:12px">
           <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">#</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Unidades</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Faturamento</th></tr>
-          ${ranking.map((r, i) => `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-weight:700;color:${medalColors[i]}">${i + 1}º</td><td style="padding:8px">${r.brand} ${r.model}<br><small style="color:#9ca3af">${r.color}</small></td><td style="padding:8px;text-align:right;font-weight:600">${r.qtd}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR(r.total)}</td></tr>`).join('')}
+          ${ranking.map((r, i) => `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-weight:700;color:${medalColors[i]}">${i + 1}º</td><td style="padding:8px">${r.brand} ${r.model}</td><td style="padding:8px;text-align:right;font-weight:600">${r.qtd}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR(r.total)}</td></tr>`).join('')}
           ${!ranking.length ? '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Nenhuma venda no período</td></tr>' : ''}
         </table>`
       } else {
