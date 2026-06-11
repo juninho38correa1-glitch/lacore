@@ -7,6 +7,24 @@ import { Modal } from '@/components/ui/Modal'
 
 interface ReportData { html: string; title: string }
 
+// Vendas com vários itens gravam só o produto principal em product_id;
+// os demais aparecem listados em notes ("Itens: Marca Modelo (R$ X), ...")
+function saleProductEntries(s: Record<string, unknown>): { label: string; total: number }[] {
+  const notes = String(s.notes || '')
+  const m = notes.match(/Itens:\s*(.+)/)
+  if (m) {
+    return m[1].split(/\),\s*/).map(part => {
+      const mm = part.match(/^(.+?)\s*\(R\$\s*([\d.,]+)/)
+      if (!mm) return null
+      const label = mm[1].trim()
+      const total = parseFloat(mm[2].replace(/\./g, '').replace(',', '.')) || 0
+      return { label, total }
+    }).filter((x): x is { label: string; total: number } => !!x)
+  }
+  const p = s.product as Record<string, string> | null
+  return p ? [{ label: `${p.brand} ${p.model}`.trim(), total: Number(s.total_price) || 0 }] : []
+}
+
 export default function RelatoriosPage() {
   const [periodo, setPeriodo] = useState('mes')
   const [filtroStatus, setFiltroStatus] = useState('')
@@ -103,26 +121,25 @@ export default function RelatoriosPage() {
         </table>`
       } else if (tipo === 'ranking') {
         titulo = 'Top 5 Mais Vendidos'
-        const { data, error } = await sb.from('sales').select('product_id,total_price,product:products(brand,model)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim)
+        const { data, error } = await sb.from('sales').select('total_price,notes,product:products(brand,model)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim)
         if (error) throw error
         const sales = data || []
-        const grouped = new Map<string, { brand: string; model: string; qtd: number; total: number }>()
+        const grouped = new Map<string, { label: string; qtd: number; total: number }>()
         sales.forEach((s) => {
-          const rec = s as Record<string, unknown>
-          const p = rec.product as Record<string, string> | null
-          if (!p) return
-          const key = `${p.brand}|${p.model}`
-          const cur = grouped.get(key) || { brand: p.brand || '—', model: p.model || '', qtd: 0, total: 0 }
-          cur.qtd += 1
-          cur.total += Number(rec.total_price) || 0
-          grouped.set(key, cur)
+          saleProductEntries(s as Record<string, unknown>).forEach(({ label, total }) => {
+            const key = label.toLowerCase()
+            const cur = grouped.get(key) || { label, qtd: 0, total: 0 }
+            cur.qtd += 1
+            cur.total += total
+            grouped.set(key, cur)
+          })
         })
         const ranking = [...grouped.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 5)
         subtitulo += ` · ${sales.length} vendas`
         const medalColors = ['#f59e0b', '#94a3b8', '#b45309', '#64748b', '#64748b']
         content = `<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:12px">
           <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">#</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Unidades</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Faturamento</th></tr>
-          ${ranking.map((r, i) => `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-weight:700;color:${medalColors[i]}">${i + 1}º</td><td style="padding:8px">${r.brand} ${r.model}</td><td style="padding:8px;text-align:right;font-weight:600">${r.qtd}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR(r.total)}</td></tr>`).join('')}
+          ${ranking.map((r, i) => `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-weight:700;color:${medalColors[i]}">${i + 1}º</td><td style="padding:8px">${r.label}</td><td style="padding:8px;text-align:right;font-weight:600">${r.qtd}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR(r.total)}</td></tr>`).join('')}
           ${!ranking.length ? '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Nenhuma venda no período</td></tr>' : ''}
         </table>`
       } else {

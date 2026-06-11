@@ -9,6 +9,21 @@ import { SkeletonCard, SkeletonRow } from '@/components/ui/Skeleton'
 import { RevenueChart } from '@/components/RevenueChart'
 import { Modal } from '@/components/ui/Modal'
 
+// Vendas com vários itens gravam só o produto principal em product_id;
+// os demais aparecem listados em notes ("Itens: Marca Modelo (R$ X), ...")
+function saleProductLabels(s: Record<string, unknown>): string[] {
+  const notes = String(s.notes || '')
+  const m = notes.match(/Itens:\s*(.+)/)
+  if (m) {
+    return m[1].split(/\),\s*/).map(part => {
+      const mm = part.match(/^(.+?)\s*\(/)
+      return (mm ? mm[1] : part).trim()
+    }).filter(Boolean)
+  }
+  const p = s.product as Record<string, string> | null
+  return p ? [`${p.brand} ${p.model}`.trim()] : []
+}
+
 export default function DashboardPage() {
   const { user, isAdmin } = useAuth()
   const router = useRouter()
@@ -28,7 +43,7 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<{ labels: string[]; rev: number[]; prf: number[] }>({ labels: [], rev: [], prf: [] })
   const [extratoSales, setExtratoSales] = useState<Record<string, unknown>[]>([])
   const [extratoOpen, setExtratoOpen] = useState<'faturamento' | 'lucro' | null>(null)
-  const [topProducts, setTopProducts] = useState<{ brand: string; model: string; qtd: number }[]>([])
+  const [topProducts, setTopProducts] = useState<{ label: string; qtd: number }[]>([])
 
   // Vendedor stats
   const [vRev, setVRev]       = useState(0)
@@ -75,15 +90,16 @@ export default function DashboardPage() {
       setRecent((s3.data || []) as Record<string, unknown>[])
       setExtratoSales([...thisMo].sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()))
 
-      // Top 5 produtos mais vendidos no mês (agrupado por modelo, ignorando cor/armazenamento)
-      const prodMap = new Map<string, { brand: string; model: string; qtd: number }>()
+      // Top 5 produtos mais vendidos no mês (agrupado por modelo, ignorando cor/armazenamento,
+      // contando todos os itens de vendas com múltiplos aparelhos)
+      const prodMap = new Map<string, { label: string; qtd: number }>()
       thisMo.forEach(s => {
-        const p = s.product as Record<string, string> | null
-        if (!p) return
-        const key = `${p.brand}|${p.model}`
-        const cur = prodMap.get(key) || { brand: p.brand, model: p.model, qtd: 0 }
-        cur.qtd += 1
-        prodMap.set(key, cur)
+        saleProductLabels(s).forEach(label => {
+          const key = label.toLowerCase()
+          const cur = prodMap.get(key) || { label, qtd: 0 }
+          cur.qtd += 1
+          prodMap.set(key, cur)
+        })
       })
       setTopProducts([...prodMap.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 5))
       setStale(prods.filter(p => dI(p.date_added || '') >= 15) as Record<string, unknown>[])
@@ -284,7 +300,7 @@ export default function DashboardPage() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', borderBottom: i < topProducts.length - 1 ? '1px solid var(--border-1)' : 'none' }}>
                   <span style={{ fontSize: 10.5, fontWeight: 700, width: 14, color: rankColors[i] || 'var(--text-4)' }}>{i + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.brand} {p.model}</p>
+                    <p style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.label}</p>
                   </div>
                   <span className="mono" style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{p.qtd}x</span>
                 </div>
