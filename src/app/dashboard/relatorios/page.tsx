@@ -7,6 +7,12 @@ import { Modal } from '@/components/ui/Modal'
 
 interface ReportData { html: string; title: string }
 
+// Remove sufixo de geração de rede (4G/5G/3G), que pode ter sido removido
+// do cadastro do produto depois que vendas antigas já registraram o nome com ele
+function normalizeProductLabel(label: string): string {
+  return label.replace(/\s+(3g|4g|5g)$/i, '').trim()
+}
+
 // Vendas com vários itens gravam só o produto principal em product_id;
 // os demais aparecem listados em notes ("Itens: Marca Modelo (R$ X), ...")
 function saleProductEntries(s: Record<string, unknown>): { label: string; total: number }[] {
@@ -16,13 +22,13 @@ function saleProductEntries(s: Record<string, unknown>): { label: string; total:
     return m[1].split(/\),\s*/).map(part => {
       const mm = part.match(/^(.+?)\s*\(R\$\s*([\d.,]+)/)
       if (!mm) return null
-      const label = mm[1].trim()
+      const label = normalizeProductLabel(mm[1])
       const total = parseFloat(mm[2].replace(/\./g, '').replace(',', '.')) || 0
       return { label, total }
     }).filter((x): x is { label: string; total: number } => !!x)
   }
   const p = s.product as Record<string, string> | null
-  return p ? [{ label: `${p.brand} ${p.model}`.trim(), total: Number(s.total_price) || 0 }] : []
+  return p ? [{ label: normalizeProductLabel(`${p.brand} ${p.model}`), total: Number(s.total_price) || 0 }] : []
 }
 
 export default function RelatoriosPage() {

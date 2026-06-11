@@ -9,6 +9,12 @@ import { SkeletonCard, SkeletonRow } from '@/components/ui/Skeleton'
 import { RevenueChart } from '@/components/RevenueChart'
 import { Modal } from '@/components/ui/Modal'
 
+// Remove sufixo de geração de rede (4G/5G/3G), que pode ter sido removido
+// do cadastro do produto depois que vendas antigas já registraram o nome com ele
+function normalizeProductLabel(label: string): string {
+  return label.replace(/\s+(3g|4g|5g)$/i, '').trim()
+}
+
 // Vendas com vários itens gravam só o produto principal em product_id;
 // os demais aparecem listados em notes ("Itens: Marca Modelo (R$ X), ...")
 function saleProductLabels(s: Record<string, unknown>): string[] {
@@ -17,11 +23,11 @@ function saleProductLabels(s: Record<string, unknown>): string[] {
   if (m) {
     return m[1].split(/\),\s*/).map(part => {
       const mm = part.match(/^(.+?)\s*\(/)
-      return (mm ? mm[1] : part).trim()
+      return normalizeProductLabel(mm ? mm[1] : part)
     }).filter(Boolean)
   }
   const p = s.product as Record<string, string> | null
-  return p ? [`${p.brand} ${p.model}`.trim()] : []
+  return p ? [normalizeProductLabel(`${p.brand} ${p.model}`)] : []
 }
 
 export default function DashboardPage() {
