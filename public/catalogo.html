@@ -238,14 +238,21 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   padding:20px;
 }
 .lbox.open{opacity:1;pointer-events:all}
-.lbox img{
-  max-width:100%;max-height:90dvh;
-  object-fit:contain;border-radius:12px;
-  transform:scale(.88);
-  transition:transform .35s var(--soft);
+
+/* ─── Seletor interativo (accordion horizontal) ─── */
+.lbox-options{
+  display:flex;gap:8px;
+  width:100%;max-width:1100px;height:78dvh;
   cursor:default;
 }
-.lbox.open img{transform:scale(1)}
+.lbox-opt{
+  position:relative;flex:1 1 0%;min-width:28px;
+  border-radius:14px;overflow:hidden;cursor:pointer;
+  background-size:cover;background-position:center;background-color:var(--bg-2);
+  border:1px solid rgba(255,255,255,.08);
+  transition:flex-grow .6s cubic-bezier(.22,1,.36,1),border-color .25s;
+}
+.lbox-opt.active{flex:8 1 0%;border-color:rgba(255,255,255,.35)}
 .lbox-close{
   position:absolute;top:20px;right:20px;
   width:44px;height:44px;border-radius:99px;
@@ -662,7 +669,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   <button class="lbox-nav" id="lbox-prev" onclick="event.stopPropagation();lboxNav(-1)" aria-label="Foto anterior" style="left:16px">
     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
   </button>
-  <img id="lbox-img" src="" alt="" onclick="event.stopPropagation()" style="max-width:100%;max-height:90dvh;object-fit:contain;border-radius:12px"/>
+  <div class="lbox-options" id="lbox-options" onclick="event.stopPropagation()"></div>
   <button class="lbox-nav" id="lbox-next" onclick="event.stopPropagation();lboxNav(1)" aria-label="Próxima foto" style="right:16px">
     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
   </button>
@@ -1504,7 +1511,7 @@ function abrirLightbox() {
   if (!lboxFotos.length) return; // sem fotos, não abre
   lboxIdx = lboxFotos.indexOf(modalImg);
   if (lboxIdx < 0) lboxIdx = 0;
-  atualizarLightbox();
+  renderLightboxOptions();
   document.getElementById('lbox').classList.add('open');
   // não mexe no overflow aqui — o modal já travou o scroll
 }
@@ -1514,24 +1521,38 @@ function fecharLightbox() {
   document.body.style.overflow = 'hidden'; // modal ainda está aberto
 }
 
-function atualizarLightbox() {
-  const img = document.getElementById('lbox-img');
-  img.src = lboxFotos[lboxIdx];
-  img.alt = `${modalProd.marca} ${modalProd.modelo} — foto ${lboxIdx+1}`;
+/* Seletor interativo: cada foto vira um painel; o ativo expande */
+function renderLightboxOptions() {
+  const wrap = document.getElementById('lbox-options');
+  wrap.innerHTML = lboxFotos.map((url, i) => `
+    <div class="lbox-opt ${i === lboxIdx ? 'active' : ''}"
+         style="background-image:url('${url}')"
+         onclick="event.stopPropagation();selecionarLboxFoto(${i})"
+         aria-label="Foto ${i+1}"></div>
+  `).join('');
+  atualizarLightboxInfo();
+}
+
+function atualizarLightboxInfo() {
   document.getElementById('lbox-counter').textContent =
     lboxFotos.length > 1 ? `${lboxIdx+1} / ${lboxFotos.length}` : '';
   document.getElementById('lbox-prev').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
   document.getElementById('lbox-next').style.display = lboxFotos.length > 1 ? 'flex' : 'none';
 }
 
-function lboxNav(dir) {
-  lboxIdx = (lboxIdx + dir + lboxFotos.length) % lboxFotos.length;
-  atualizarLightbox();
+function selecionarLboxFoto(i) {
+  lboxIdx = i;
+  document.querySelectorAll('.lbox-opt').forEach((el, idx) => el.classList.toggle('active', idx === lboxIdx));
+  atualizarLightboxInfo();
   // Atualiza também a foto selecionada no modal
   modalImg = lboxFotos[lboxIdx];
   document.getElementById('modal-img').src = modalImg;
   document.querySelectorAll('.thumb').forEach(t =>
     t.classList.toggle('sel', t.getAttribute('src') === modalImg));
+}
+
+function lboxNav(dir) {
+  selecionarLboxFoto((lboxIdx + dir + lboxFotos.length) % lboxFotos.length);
 }
 
 /* Teclado no lightbox */
