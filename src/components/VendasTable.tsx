@@ -352,6 +352,8 @@ export default function VendasTable() {
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 50%,#f0fdf4 100%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:24px 16px;-webkit-font-smoothing:antialiased}
   .doc{background:#fff;border-radius:20px;max-width:500px;width:100%;box-shadow:0 4px 0 rgba(0,0,0,.06),0 20px 60px rgba(0,0,0,.12);overflow:hidden;position:relative}
+  .doc-watermark{position:absolute;inset:0;background-image:url('${logoUrl}');background-repeat:repeat;background-size:160px;background-position:center;opacity:.04;pointer-events:none;z-index:0}
+  .doc-header,.doc-body,.doc-footer{position:relative;z-index:1}
 
   /* Header gradient */
   .doc-header{background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 40%,#3b82f6 100%);padding:28px 28px 22px;position:relative;overflow:hidden}
@@ -476,6 +478,7 @@ export default function VendasTable() {
   </div>
 
   <div class="doc">
+    ${logoUrl ? `<div class="doc-watermark"></div>` : ''}
     <!-- Header -->
     <div class="doc-header">
       <div class="brand-row">
