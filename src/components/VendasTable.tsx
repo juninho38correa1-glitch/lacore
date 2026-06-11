@@ -578,7 +578,7 @@ export default function VendasTable() {
       <div class="garantia-box">
         <div class="garantia-icon">🛡️</div>
         <div>
-          <div class="garantia-title">Garantia contra Defeito de Fábrica — 90 dias</div>
+          <div class="garantia-title">Garantia contra Defeito de Fábrica</div>
           <div class="garantia-text"><strong>90 dias</strong> contra defeitos de fabricação comprovados. Não nos responsabilizamos por danos causados por mau uso, quedas, líquidos, violação ou avarias externas. Todo acionamento passa por <strong>análise técnica</strong> para confirmar a legitimidade antes de qualquer providência.</div>
         </div>
       </div>
