@@ -53,7 +53,7 @@ export default function DashboardPage() {
       const lsom = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
       const [s1, s2, s3, s4] = await Promise.all([
-        sb.from('sales').select('id,reference,total_price,profit_total,margin_percent,created_at,customer:customers(name,city,state),product:products(brand,model,color)').eq('status', 'APROVADA'),
+        sb.from('sales').select('id,reference,total_price,profit_total,margin_percent,created_at,notes,customer:customers(name,city,state),product:products(brand,model,color)').eq('status', 'APROVADA'),
         sb.from('products').select('id,date_added,brand,model').eq('status', 'ATIVO'),
         sb.from('sales').select('id,reference,total_price,profit_total,created_at,product:products(brand,model)').eq('status', 'APROVADA').order('created_at', { ascending: false }).limit(7),
         sb.from('users').select('id,name').eq('status', 'ATIVO'), // todos os usuários ativos
@@ -342,7 +342,7 @@ export default function DashboardPage() {
         open={extratoOpen !== null}
         onClose={() => setExtratoOpen(null)}
         title={extratoOpen === 'faturamento' ? 'Extrato de Faturamento' : 'Extrato de Lucro'}
-        size="lg"
+        size="xl"
       >
         <div style={{ padding: '14px 18px' }}>
           <p style={{ fontSize: 11.5, color: 'var(--text-4)', marginBottom: 12 }}>
@@ -362,13 +362,16 @@ export default function DashboardPage() {
               {extratoSales.map((s, i) => {
                 const cust = s.customer as Record<string, string> | null
                 const prod = s.product as Record<string, string> | null
+                const notes = String(s.notes || '')
+                const itensMatch = notes.match(/Itens:\s*(.+)/)
+                const produtoLabel = itensMatch ? itensMatch[1] : (prod ? `${prod.brand} ${prod.model}` : '—')
                 const valor = extratoOpen === 'lucro' ? Number(s.profit_total) || 0 : Number(s.total_price) || 0
                 return (
                   <tr key={i}>
                     <td style={{ color: 'var(--text-4)', fontSize: 12 }}>{fD(String(s.created_at || ''))}</td>
                     <td style={{ fontWeight: 500 }}>{cust?.name || '—'}</td>
                     <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>{cust?.city ? `${cust.city}${cust.state ? `/${cust.state}` : ''}` : '—'}</td>
-                    <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>{prod ? `${prod.brand} ${prod.model}` : '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>{produtoLabel}</td>
                     <td className="mono" style={{ fontWeight: 600, color: extratoOpen === 'lucro' ? 'var(--green)' : 'var(--accent)' }}>{fR(valor)}</td>
                   </tr>
                 )
