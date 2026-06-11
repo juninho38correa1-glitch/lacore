@@ -14,8 +14,6 @@
 <meta name="twitter:card"        content="summary" />
 <meta name="twitter:image"       content="https://lacore.vercel.app/icon-512.png" />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
@@ -701,8 +699,6 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
      SCRIPT
 ════════════════════════════════════════════════ -->
 <script>
-gsap.registerPlugin(Flip);
-
 /* ── Taxas InfinityPay (projeto original) ── */
 const TAXAS = {2:5.39,3:6.12,4:6.85,5:7.57,6:8.28,7:8.99,8:9.69,9:10.38,10:11.06,11:11.74,12:12.40};
 const IOF   = 1.76;
@@ -1202,8 +1198,11 @@ function aplicarBuscaOrdem() {
   const grid  = document.getElementById('grid');
   const items = [...grid.querySelectorAll('.card')];
 
-  // ★ Captura posição ANTES de mover — Flip precisa disso para animar
-  const state = Flip.getState(items);
+  // ★ FLIP — First: posição de cada card visível antes do reflow
+  const firstRects = new Map();
+  items.forEach(el => {
+    if (!el.classList.contains('hidden-item')) firstRects.set(el, el.getBoundingClientRect());
+  });
 
   // Mapa chave → elemento DOM
   const cardMap = {};
@@ -1228,17 +1227,27 @@ function aplicarBuscaOrdem() {
 
   document.getElementById('empty').style.display = lista.length === 0 ? 'block' : 'none';
 
-  // ★ FLIP reveal — cards reorganizam suavemente para a nova posição
-  Flip.from(state, {
-    duration: .4,
-    ease: 'power2.inOut',
-    onEnter: els => gsap.fromTo(els, { opacity:0 }, { opacity:1, duration:.3, ease:'power1.out' }),
-    onLeave: els => gsap.to(els,    { opacity:0, duration:.2 }),
+  // ★ FLIP — Last/Invert/Play: anima cada card da posição antiga até a nova
+  items.forEach(el => {
+    const first = firstRects.get(el);
+    if (!first || el.classList.contains('hidden-item')) return;
+    const last = el.getBoundingClientRect();
+    const dx = first.left - last.left;
+    const dy = first.top  - last.top;
+    if (!dx && !dy) return;
+    el.style.transition = 'none';
+    el.style.transform  = `translate(${dx}px, ${dy}px)`;
+    el.getBoundingClientRect(); // força reflow
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .4s ease';
+      el.style.transform  = '';
+      el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once:true });
+    });
   });
 }
 
 /* ════════════════════════════════════════
-   FILTRAR — GSAP Flip + spring do 06
+   FILTRAR
 ════════════════════════════════════════ */
 function filtrar(marca) {
   filtroAtual = marca;
