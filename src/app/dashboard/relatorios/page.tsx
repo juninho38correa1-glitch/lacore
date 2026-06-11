@@ -64,21 +64,27 @@ export default function RelatoriosPage() {
 
       if (tipo === 'lucro') {
         titulo = 'Relatório de Lucro'
-        const { data, error } = await sb.from('sales').select('reference,total_price,profit_total,margin_percent,created_at,product:products(brand,model)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim).order('created_at')
+        const { data, error } = await sb.from('sales').select('reference,total_price,profit_total,created_at,product:products(brand,model)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim).order('created_at')
         if (error) throw error
         const sales = data || []
         const total_rev = sales.reduce((a, s) => a + ((s as Record<string,number>).total_price || 0), 0)
         const total_prf = sales.reduce((a, s) => a + ((s as Record<string,number>).profit_total || 0), 0)
-        const avg_mg = sales.length ? sales.reduce((a, s) => a + ((s as Record<string,number>).margin_percent || 0), 0) / sales.length : 0
+        const markup = (s: Record<string,number>) => {
+          const total = s.total_price || 0
+          const profit = s.profit_total || 0
+          const cost = total - profit
+          return cost > 0 ? (profit / cost * 100) : 0
+        }
+        const avg_mg = sales.length ? sales.reduce((a, s) => a + markup(s as Record<string,number>), 0) / sales.length : 0
         subtitulo += ` · ${sales.length} vendas`
         content = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
           <div style="background:#eff6ff;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Faturamento</p><p style="font-size:24px;font-weight:700;color:#1d4ed8;margin:0">${fR(total_rev)}</p></div>
           <div style="background:#f0fdf4;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Lucro Total</p><p style="font-size:24px;font-weight:700;color:#16a34a;margin:0">${fR(total_prf)}</p></div>
-          <div style="background:#fefce8;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Margem Média</p><p style="font-size:24px;font-weight:700;color:#ca8a04;margin:0">${avg_mg.toFixed(1)}%</p></div>
+          <div style="background:#fefce8;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Markup Médio</p><p style="font-size:24px;font-weight:700;color:#ca8a04;margin:0">${avg_mg.toFixed(1)}%</p></div>
         </div>
         <div class=\"table-wrap\"><table style=\"width:100%;border-collapse:collapse;font-size:12px\">
-          <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Ref</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Valor</th><th class="hide-mobile" style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Lucro</th><th class="hide-mobile" style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Margem</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Data</th></tr>
-          ${sales.map((s) => { const p = (s as Record<string,Record<string,string>>).product; return `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-family:monospace;font-size:11px;color:#6b7280">${(s as Record<string,string>).reference}</td><td style="padding:8px">${p?.brand} ${p?.model}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR((s as Record<string,number>).total_price)}</td><td style="padding:8px;text-align:right;color:#16a34a">${fR((s as Record<string,number>).profit_total)}</td><td style="padding:8px;text-align:right;color:#ca8a04">${((s as Record<string,number>).margin_percent || 0).toFixed(1)}%</td><td style="padding:8px;color:#6b7280;font-size:11px">${fD((s as Record<string,string>).created_at)}</td></tr>` }).join('')}
+          <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Ref</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Valor</th><th class="hide-mobile" style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Lucro</th><th class="hide-mobile" style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Markup</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Data</th></tr>
+          ${sales.map((s) => { const p = (s as Record<string,Record<string,string>>).product; return `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-family:monospace;font-size:11px;color:#6b7280">${(s as Record<string,string>).reference}</td><td style="padding:8px">${p?.brand} ${p?.model}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR((s as Record<string,number>).total_price)}</td><td style="padding:8px;text-align:right;color:#16a34a">${fR((s as Record<string,number>).profit_total)}</td><td style="padding:8px;text-align:right;color:#ca8a04">${markup(s as Record<string,number>).toFixed(1)}%</td><td style="padding:8px;color:#6b7280;font-size:11px">${fD((s as Record<string,string>).created_at)}</td></tr>` }).join('')}
         </table>`
 
       } else if (tipo === 'comissoes') {

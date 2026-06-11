@@ -393,12 +393,12 @@ export default function RemessasPage() {
                         <thead><tr>
                           <th>Produto</th><th>Qtd</th>
                           <th>Custo USD</th><th>Custo BRL/un</th>
-                          <th>Preço Venda</th><th>Preço Mín.</th><th>Margem</th>
+                          <th>Preço Venda</th><th>Preço Mín.</th><th>Markup</th>
                         </tr></thead>
                         <tbody>
                           {(ship.items || []).map(it => {
                             const margin = it.price_sale && it.cost_brl_unit
-                              ? ((it.price_sale - it.cost_brl_unit) / it.price_sale * 100) : 0
+                              ? ((it.price_sale - it.cost_brl_unit) / it.cost_brl_unit * 100) : 0
                             return (
                               <tr key={it.id}>
                                 <td style={{ fontWeight: 500 }}>
@@ -492,7 +492,7 @@ export default function RemessasPage() {
               {itens.map((it, idx) => {
                 const costUnit = exRate ? calcCustoUnit(it) : 0
                 const margin   = (it.price_sale || 0) > 0 && costUnit > 0
-                  ? (((it.price_sale || 0) - costUnit) / (it.price_sale || 0) * 100) : 0
+                  ? (((it.price_sale || 0) - costUnit) / costUnit * 100) : 0
 
                 return (
                   <div key={idx} style={{ background: 'var(--bg-2)', border: '1px solid var(--border-1)', borderRadius: 10, padding: 12 }}>
@@ -566,7 +566,7 @@ export default function RemessasPage() {
                         <span style={{ color: 'var(--text-4)' }}>Custo/un: <strong style={{ color: 'var(--red)' }}>{fR(costUnit)}</strong></span>
                         {(it.price_sale || 0) > 0 && <>
                           <span style={{ color: 'var(--text-4)' }}>Lucro: <strong style={{ color: 'var(--green)' }}>{fR((it.price_sale || 0) - costUnit)}</strong></span>
-                          <span className={`badge badge-${margin >= 20 ? 'green' : margin >= 10 ? 'yellow' : 'red'}`}>{margin.toFixed(1)}% margem</span>
+                          <span className={`badge badge-${margin >= 20 ? 'green' : margin >= 10 ? 'yellow' : 'red'}`}>{margin.toFixed(1)}% markup</span>
                         </>}
                       </div>
                     )}

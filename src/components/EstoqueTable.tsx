@@ -211,7 +211,7 @@ export default function EstoqueTable() {
     load()
   }
 
-  const margin = (cost: number, price: number) => cost && price ? ((price - cost) / price * 100).toFixed(1) + '%' : '—'
+  const margin = (cost: number, price: number) => cost && price ? ((price - cost) / cost * 100).toFixed(1) + '%' : '—'
 
   // Abrir edição para produto individual (não grupo)
   const openEditById = (p: Product) => {
@@ -267,7 +267,7 @@ export default function EstoqueTable() {
           <table>
             <thead><tr>
               <th>Produto</th><th>Storage</th><th>Cond.</th><th>Qtd</th>
-              {isAdmin() && <><th>Custo</th><th>Margem</th></>}
+              {isAdmin() && <><th>Custo</th><th>Markup</th></>}
               <th>Preço</th><th>Parado</th><th></th>
             </tr></thead>
             <tbody>
@@ -495,7 +495,7 @@ export default function EstoqueTable() {
             <div className="grid grid-cols-2 gap-2">
               {(['percent', 'fixed'] as const).map(m => (
                 <button key={m} onClick={() => setPrecoModal(p => ({ ...p, mode: m }))} className={`py-2 rounded-lg text-xs font-semibold border transition-colors ${precoModal.mode === m ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400 hover:text-gray-300'}`}>
-                  {m === 'percent' ? '% Margem' : 'R$ Fixo'}
+                  {m === 'percent' ? '% Markup' : 'R$ Fixo'}
                 </button>
               ))}
             </div>
@@ -506,7 +506,7 @@ export default function EstoqueTable() {
                   <option value="cost">Custo ({fR(precoModal.grupo.cost)})</option>
                   <option value="current">Preço atual ({fR(precoModal.grupo.price)})</option>
                 </select>
-                <label className="text-xs text-gray-400 mb-1 block">Margem %</label>
+                <label className="text-xs text-gray-400 mb-1 block">Markup %</label>
                 <input type="number" value={precoInput} onChange={e => setPrecoInput(e.target.value)} placeholder="Ex: 48" className="text-sm" />
               </div>
             )}
@@ -520,7 +520,7 @@ export default function EstoqueTable() {
               <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                 <p className="text-xs text-gray-500">Novo preço calculado</p>
                 <p className="text-xl font-bold text-cyan-300">{fR(calcPreco()!)}</p>
-                {precoModal.mode === 'percent' && <p className="text-xs text-gray-500 mt-1">Margem: {parseFloat(precoInput).toFixed(1)}%</p>}
+                {precoModal.mode === 'percent' && <p className="text-xs text-gray-500 mt-1">Markup: {parseFloat(precoInput).toFixed(1)}%</p>}
               </div>
             )}
             <div className="flex gap-2">

@@ -74,7 +74,7 @@ export default function DashboardPage() {
       const lsom = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
       const [s1, s2, s3, s4] = await Promise.all([
-        sb.from('sales').select('id,reference,total_price,profit_total,margin_percent,created_at,notes,customer:customers(name,city,state),product:products(brand,model,color)').eq('status', 'APROVADA'),
+        sb.from('sales').select('id,reference,total_price,profit_total,created_at,notes,customer:customers(name,city,state),product:products(brand,model,color)').eq('status', 'APROVADA'),
         sb.from('products').select('id,date_added,brand,model').eq('status', 'ATIVO'),
         sb.from('sales').select('id,reference,total_price,profit_total,created_at,product:products(brand,model)').eq('status', 'APROVADA').order('created_at', { ascending: false }).limit(7),
         sb.from('users').select('id,name').eq('status', 'ATIVO'), // todos os usuários ativos
@@ -88,7 +88,12 @@ export default function DashboardPage() {
 
       setRev(thisMo.reduce((a, x) => a + ((x.total_price as number) || 0), 0))
       setPrf(thisMo.reduce((a, x) => a + ((x.profit_total as number) || 0), 0))
-      setMg(thisMo.length ? thisMo.reduce((a, x) => a + ((x.margin_percent as number) || 0), 0) / thisMo.length : 0)
+      setMg(thisMo.length ? thisMo.reduce((a, x) => {
+        const total = (x.total_price as number) || 0
+        const profit = (x.profit_total as number) || 0
+        const cost = total - profit
+        return a + (cost > 0 ? (profit / cost * 100) : 0)
+      }, 0) / thisMo.length : 0)
       setSalesCount(thisMo.length)
       setStockCount(prods.length)
       setLrev(lastMo.reduce((a, x) => a + ((x.total_price as number) || 0), 0))
@@ -203,7 +208,7 @@ export default function DashboardPage() {
           { l: 'Vendas',      v: vCount,      c: 'var(--purple)',  Icon: ShoppingCart },
           { l: 'Em Estoque',  v: vStock,      c: 'var(--yellow)',  Icon: Package     },
         ].map(({ l, v, c, Icon }) => (
-          <div key={l} className={`stat-card stat-pop card-hover card-glow ${l === "Faturamento" ? "stat-card-accent" : l === "Lucro" ? "stat-card-green" : l === "Margem Média" ? "stat-card-yellow" : ""}`} style={{ cursor: "default" }}>
+          <div key={l} className={`stat-card stat-pop card-hover card-glow ${l === "Faturamento" ? "stat-card-accent" : l === "Lucro" ? "stat-card-green" : l === "Markup Médio" ? "stat-card-yellow" : ""}`} style={{ cursor: "default" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
               <p className="stat-label">{l}</p>
               <Icon size={13} style={{ color: 'var(--text-4)' }} />
@@ -251,7 +256,7 @@ export default function DashboardPage() {
         {[
           { l: 'Faturamento',   v: fR(rev),        c: 'var(--accent)',  Icon: DollarSign,   d: delta(rev,  lrev), onClick: () => setExtratoOpen('faturamento') },
           { l: 'Lucro',         v: fR(prf),        c: 'var(--green)',   Icon: TrendingUp,   d: delta(prf,  lprf), onClick: () => setExtratoOpen('lucro') },
-          { l: 'Margem Média',  v: fP(mg),         c: 'var(--yellow)',  Icon: BarChart2,    d: null },
+          { l: 'Markup Médio',  v: fP(mg),         c: 'var(--yellow)',  Icon: BarChart2,    d: null },
           { l: 'Vendas',        v: salesCount,      c: 'var(--purple)',  Icon: ShoppingCart, d: null, href: '/dashboard/vendas' },
           { l: 'Em Estoque',    v: stockCount,      c: 'var(--accent)',  Icon: Package,      d: null, href: '/dashboard/estoque' },
         { l: 'A Receber',      v: fR(aReceber),    c: 'var(--yellow)',  Icon: DollarSign,   d: null, href: '/dashboard/fluxo-caixa?tab=areceber' },
@@ -261,7 +266,7 @@ export default function DashboardPage() {
                role={(href || onClick) ? 'button' : undefined}
                tabIndex={(href || onClick) ? 0 : undefined}
                onKeyDown={(href || onClick) ? (e) => { if (e.key === 'Enter') { onClick ? onClick() : href && router.push(href) } } : undefined}
-               className={`stat-card stat-pop card-hover card-glow ${(href || onClick) ? 'clickable' : ''} ${l === "Faturamento" ? "stat-card-accent" : l === "Lucro" ? "stat-card-green" : l === "Margem Média" ? "stat-card-yellow" : ""}`}
+               className={`stat-card stat-pop card-hover card-glow ${(href || onClick) ? 'clickable' : ''} ${l === "Faturamento" ? "stat-card-accent" : l === "Lucro" ? "stat-card-green" : l === "Markup Médio" ? "stat-card-yellow" : ""}`}
                style={{ cursor: (href || onClick) ? "pointer" : "default" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
               <p className="stat-label">{l}</p>

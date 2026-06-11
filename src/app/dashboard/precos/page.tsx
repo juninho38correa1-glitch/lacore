@@ -105,7 +105,7 @@ export default function PrecosPage() {
 
         {g && (
           <div className="form-grid-3" style={{ gap: 10 }}>
-            {[['Custo BRL', fR(g.custo), 'var(--text-2)'], ['Preço Atual', fR(g.preco), 'var(--accent)'], ['Margem Est.', g.custo && g.preco ? ((g.preco - g.custo) / g.preco * 100).toFixed(1) + '%' : '—', 'var(--green)']].map(([l, v, c]) => (
+            {[['Custo BRL', fR(g.custo), 'var(--text-2)'], ['Preço Atual', fR(g.preco), 'var(--accent)'], ['Markup Est.', g.custo && g.preco ? ((g.preco - g.custo) / g.custo * 100).toFixed(1) + '%' : '—', 'var(--green)']].map(([l, v, c]) => (
               <div key={l as string} style={{ background: 'var(--bg-2)', border: '1px solid var(--border-1)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
                 <p style={{ fontSize: 10, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>{l}</p>
                 <p style={{ fontWeight: 700, fontSize: 14, color: c as string }}>{v}</p>
