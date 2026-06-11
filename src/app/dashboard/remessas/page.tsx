@@ -437,6 +437,13 @@ export default function RemessasPage() {
                         </tbody>
                       </table>
                     </div>
+                    {(ship.travel_cost_brl > 0 || ship.other_costs_brl > 0) && (
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', padding: '8px 16px', fontSize: 12, color: 'var(--text-4)', borderTop: '1px solid var(--border-1)' }}>
+                        <span>🚗 Viagem: <strong style={{ color: 'var(--text-2)' }}>{fR(ship.travel_cost_brl)}</strong></span>
+                        <span>📦 Outros custos: <strong style={{ color: 'var(--text-2)' }}>{fR(ship.other_costs_brl)}</strong></span>
+                        <span>Σ Custos extras: <strong style={{ color: 'var(--yellow)' }}>{fR(ship.travel_cost_brl + ship.other_costs_brl)}</strong> <span style={{ color: 'var(--text-4)' }}>(diluídos nos preços)</span></span>
+                      </div>
+                    )}
                     {ship.notes && (
                       <div style={{ padding: '8px 16px', background: 'var(--bg-2)', fontSize: 12, color: 'var(--text-4)', borderTop: '1px solid var(--border-1)' }}>
                         📝 {ship.notes}
