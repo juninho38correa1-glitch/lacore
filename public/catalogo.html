@@ -1552,6 +1552,13 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape')     fecharLightbox();
 });
 
+/* Teclado no modal de produto */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('lbox').classList.contains('open')) return;
+  if (document.getElementById('modal').classList.contains('open')) fecharModal();
+});
+
 /* Swipe mobile no lightbox */
 (function(){
   let startX = 0, startY = 0;
