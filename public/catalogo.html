@@ -1544,19 +1544,16 @@ function lboxNav(dir) {
     t.classList.toggle('sel', t.getAttribute('src') === modalImg));
 }
 
-/* Teclado no lightbox */
+/* Teclado no lightbox e modal de produto */
 document.addEventListener('keydown', e => {
-  if (!document.getElementById('lbox').classList.contains('open')) return;
-  if (e.key === 'ArrowRight') lboxNav(1);
-  if (e.key === 'ArrowLeft')  lboxNav(-1);
-  if (e.key === 'Escape')     fecharLightbox();
-});
-
-/* Teclado no modal de produto */
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  if (document.getElementById('lbox').classList.contains('open')) return;
-  if (document.getElementById('modal').classList.contains('open')) fecharModal();
+  const lboxOpen = document.getElementById('lbox').classList.contains('open');
+  if (lboxOpen) {
+    if (e.key === 'ArrowRight') lboxNav(1);
+    if (e.key === 'ArrowLeft')  lboxNav(-1);
+    if (e.key === 'Escape')     fecharLightbox();
+    return;
+  }
+  if (e.key === 'Escape' && document.getElementById('modal').classList.contains('open')) fecharModal();
 });
 
 /* Swipe mobile no lightbox */
