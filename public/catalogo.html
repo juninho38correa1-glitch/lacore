@@ -170,7 +170,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   /* Mobile: bottom-sheet elevado (não grudado na base) */
   align-items:flex-end;
   justify-content:center;
-  padding-bottom:max(24px, env(safe-area-inset-bottom,0));
+  padding-bottom:max(8px, env(safe-area-inset-bottom,0));
   opacity:0;pointer-events:none;
 }
 .modal-ov.open{opacity:1;pointer-events:all}
@@ -183,7 +183,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   border:1px solid var(--border);
   border-radius:24px 24px 20px 20px; /* arredondado em todas as pontas */
   padding:12px 16px calc(24px + env(safe-area-inset-bottom,0));
-  max-height:88dvh;overflow-y:auto;overflow-x:hidden;
+  max-height:96dvh;overflow-y:auto;overflow-x:hidden;
   box-shadow:0 -12px 50px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
@@ -440,7 +440,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   <div style="max-width:1200px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px">
 
     <!-- Logo — preenchida pelo JS via Supabase -->
-    <a href="#" id="logo-link" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0" aria-label="LACORE Store">
+    <a href="#" id="logo-link" onclick="event.preventDefault();voltarInicio()" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0" aria-label="LACORE Store">
       <!-- Ícone fallback (substituído pela logo real se existir) -->
       <div id="logo-icon" style="width:34px;height:34px;border-radius:10px;background:#fafafa;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(255,255,255,.1);flex-shrink:0;overflow:hidden;transition:opacity .3s">
         <svg id="logo-svg" width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#09090b" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -1244,6 +1244,15 @@ function aplicarBuscaOrdem() {
       el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once:true });
     });
   });
+}
+
+/* Logo — volta para o início do catálogo (limpa filtros/busca) */
+function voltarInicio() {
+  const ordemEl = document.getElementById('ordem');
+  if (ordemEl) ordemEl.value = 'recentes';
+  subFiltroAtual = null;
+  filtrar('Todos');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ════════════════════════════════════════
