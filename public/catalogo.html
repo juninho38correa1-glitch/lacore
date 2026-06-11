@@ -544,7 +544,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   <div class="modal-sheet" onclick="event.stopPropagation()">
 
     <!-- Handle -->
-    <div style="width:44px;height:5px;background:var(--bg-3);border-radius:99px;margin:0 auto 18px" aria-hidden="true"></div>
+    <div id="modal-handle" style="width:104px;height:33px;padding:14px 30px;margin:-14px auto 4px;box-sizing:border-box;background:var(--bg-3);background-clip:content-box;border-radius:99px;touch-action:none" aria-hidden="true"></div>
 
     <!-- Foto principal — clicável para lightbox -->
     <div style="position:relative;background:var(--bg-2);border-radius:16px;aspect-ratio:4/3;overflow:hidden;margin-bottom:10px;cursor:zoom-in" id="foto-wrap" onclick="abrirLightbox()">
@@ -1574,26 +1574,36 @@ document.addEventListener('keydown', e => {
 /* Swipe mobile para fechar modal (com arraste visual) */
 (function(){
   let startY = 0, dragging = false;
-  const sheet = document.querySelector('.modal-sheet');
-  sheet.addEventListener('touchstart', e => {
+  const sheet  = document.querySelector('.modal-sheet');
+  const handle = document.getElementById('modal-handle');
+
+  function onStart(e, viaHandle) {
     startY = e.touches[0].clientY;
-    dragging = sheet.scrollTop === 0;
-  }, {passive:true});
-  sheet.addEventListener('touchmove', e => {
+    dragging = viaHandle || sheet.scrollTop === 0;
+  }
+  function onMove(e) {
     if (!dragging) return;
     const dy = e.touches[0].clientY - startY;
     if (dy <= 0) { sheet.style.transform = ''; return; }
     sheet.style.transition = 'none';
     sheet.style.transform = `translateY(${dy}px)`;
-  }, {passive:true});
-  sheet.addEventListener('touchend', e => {
+  }
+  function onEnd(e) {
     if (!dragging) return;
     dragging = false;
     const dy = e.changedTouches[0].clientY - startY;
     sheet.style.transition = '';
     sheet.style.transform = '';
     if (dy > 80) fecharModal();
-  });
+  }
+
+  sheet.addEventListener('touchstart', e => onStart(e, false), {passive:true});
+  sheet.addEventListener('touchmove', onMove, {passive:true});
+  sheet.addEventListener('touchend', onEnd);
+
+  handle.addEventListener('touchstart', e => { e.stopPropagation(); onStart(e, true); }, {passive:true});
+  handle.addEventListener('touchmove', e => { e.stopPropagation(); onMove(e); }, {passive:true});
+  handle.addEventListener('touchend', e => { e.stopPropagation(); onEnd(e); });
 })();
 
 /* ════════════════════════════════════════
