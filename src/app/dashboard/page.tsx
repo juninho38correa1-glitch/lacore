@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { sb, fR, fD, fP, dI, ini } from '@/lib/supabase'
-import { TrendingUp, TrendingDown, Package, ShoppingCart, DollarSign, BarChart2, AlertTriangle, ArrowUpRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Package, ShoppingCart, DollarSign, BarChart2, AlertTriangle, ArrowUpRight, Smartphone } from 'lucide-react'
 import { SkeletonCard, SkeletonRow } from '@/components/ui/Skeleton'
 import { RevenueChart } from '@/components/RevenueChart'
 import { Modal } from '@/components/ui/Modal'
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<{ labels: string[]; rev: number[]; prf: number[] }>({ labels: [], rev: [], prf: [] })
   const [extratoSales, setExtratoSales] = useState<Record<string, unknown>[]>([])
   const [extratoOpen, setExtratoOpen] = useState<'faturamento' | 'lucro' | null>(null)
+  const [topProducts, setTopProducts] = useState<{ brand: string; model: string; color: string; qtd: number }[]>([])
 
   // Vendedor stats
   const [vRev, setVRev]       = useState(0)
@@ -73,6 +74,18 @@ export default function DashboardPage() {
       setLprf(lastMo.reduce((a, x) => a + ((x.profit_total as number) || 0), 0))
       setRecent((s3.data || []) as Record<string, unknown>[])
       setExtratoSales([...thisMo].sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()))
+
+      // Top 5 produtos mais vendidos no mês
+      const prodMap = new Map<string, { brand: string; model: string; color: string; qtd: number }>()
+      thisMo.forEach(s => {
+        const p = s.product as Record<string, string> | null
+        if (!p) return
+        const key = `${p.brand}|${p.model}|${p.color}`
+        const cur = prodMap.get(key) || { brand: p.brand, model: p.model, color: p.color, qtd: 0 }
+        cur.qtd += 1
+        prodMap.set(key, cur)
+      })
+      setTopProducts([...prodMap.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 5))
       setStale(prods.filter(p => dI(p.date_added || '') >= 15) as Record<string, unknown>[])
 
       // Buscar a receber de parcelamentos
@@ -257,6 +270,24 @@ export default function DashboardPage() {
                     <p style={{ fontSize: 10, color: 'var(--text-4)' }}>{v.c} venda{v.c !== 1 ? 's' : ''}</p>
                   </div>
                   <span className="mono" style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{fR(v.p)}</span>
+                </div>
+              ))
+            }
+          </div>
+          <div className="card" style={{ flex: 1 }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-4)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Smartphone size={11} />Top 5 Mais Vendidos
+            </p>
+            {!topProducts.length
+              ? <p style={{ fontSize: 12, color: 'var(--text-4)' }}>Sem dados este mês</p>
+              : topProducts.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', borderBottom: i < topProducts.length - 1 ? '1px solid var(--border-1)' : 'none' }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, width: 14, color: rankColors[i] || 'var(--text-4)' }}>{i + 1}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.brand} {p.model}</p>
+                    <p style={{ fontSize: 10, color: 'var(--text-4)' }}>{p.color}</p>
+                  </div>
+                  <span className="mono" style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>{p.qtd}x</span>
                 </div>
               ))
             }

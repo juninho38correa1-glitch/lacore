@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Download, FileText, FileSpreadsheet, ShoppingCart, Printer, Share2 } from 'lucide-react'
+import { Download, FileText, FileSpreadsheet, ShoppingCart, Printer, Share2, Trophy } from 'lucide-react'
 import { sb, fR, fD } from '@/lib/supabase'
 import { toast } from '@/components/ui/Toast'
 import { Modal } from '@/components/ui/Modal'
@@ -32,7 +32,7 @@ export default function RelatoriosPage() {
     </div>
     ${content}`
 
-  const gerarPDF = async (tipo: 'lucro' | 'comissoes' | 'vendas' | 'parcelamentos') => {
+  const gerarPDF = async (tipo: 'lucro' | 'comissoes' | 'vendas' | 'parcelamentos' | 'ranking') => {
     setLoading('pdf_' + tipo)
     try {
       const { ini, fim } = getDatas()
@@ -101,9 +101,33 @@ export default function RelatoriosPage() {
             return `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px">${ct.buyer_name}</td><td style="padding:8px;color:#6b7280">${ct.product_description}</td><td style="padding:8px;font-weight:600;color:#1d4ed8">${fR(ct.total_amount as number)}</td><td style="padding:8px;color:#6b7280">${ct.installments}x ${fR(ct.installment_value as number)}</td><td style="padding:8px;color:#16a34a">${fR(recebido)}</td><td style="padding:8px"><span style="background:${statusColor}22;color:${statusColor};padding:2px 8px;border-radius:99px;font-size:10px">${ct.status}</span></td></tr>`
           }).join('')}
         </table>`
+      } else if (tipo === 'ranking') {
+        titulo = 'Top 5 Mais Vendidos'
+        const { data, error } = await sb.from('sales').select('product_id,total_price,product:products(brand,model,color)').eq('status', 'APROVADA').gte('created_at', ini).lte('created_at', fim)
+        if (error) throw error
+        const sales = data || []
+        const grouped = new Map<string, { brand: string; model: string; color: string; qtd: number; total: number }>()
+        sales.forEach((s) => {
+          const rec = s as Record<string, unknown>
+          const p = rec.product as Record<string, string> | null
+          const pid = String(rec.product_id || '')
+          if (!pid) return
+          const cur = grouped.get(pid) || { brand: p?.brand || '—', model: p?.model || '', color: p?.color || '', qtd: 0, total: 0 }
+          cur.qtd += 1
+          cur.total += Number(rec.total_price) || 0
+          grouped.set(pid, cur)
+        })
+        const ranking = [...grouped.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 5)
+        subtitulo += ` · ${sales.length} vendas`
+        const medalColors = ['#f59e0b', '#94a3b8', '#b45309', '#64748b', '#64748b']
+        content = `<div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">#</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Unidades</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Faturamento</th></tr>
+          ${ranking.map((r, i) => `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-weight:700;color:${medalColors[i]}">${i + 1}º</td><td style="padding:8px">${r.brand} ${r.model}<br><small style="color:#9ca3af">${r.color}</small></td><td style="padding:8px;text-align:right;font-weight:600">${r.qtd}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR(r.total)}</td></tr>`).join('')}
+          ${!ranking.length ? '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Nenhuma venda no período</td></tr>' : ''}
+        </table>`
       } else {
         titulo = 'Relatório de Vendas'
-        let q = sb.from('sales').select('reference,total_price,profit_total,margin_percent,channel,status,created_at,product:products(brand,model,color),customer:customers(name)').gte('created_at', ini).lte('created_at', fim)
+        let q = sb.from('sales').select('reference,total_price,channel,status,created_at,product:products(brand,model,color),customer:customers(name)').gte('created_at', ini).lte('created_at', fim)
         // Filtrar APROVADA por padrão — nunca incluir canceladas no faturamento
         if (filtroStatus) q = q.eq('status', filtroStatus as 'APROVADA' | 'REJEITADA' | 'CANCELADA')
         else q = q.eq('status', 'APROVADA')
@@ -111,16 +135,14 @@ export default function RelatoriosPage() {
         if (error) throw error
         const sales = data || []
         const total_rev = sales.reduce((a, s) => a + ((s as Record<string,number>).total_price || 0), 0)
-        const total_prf = sales.reduce((a, s) => a + ((s as Record<string,number>).profit_total || 0), 0)
         subtitulo += ` · ${sales.length} vendas${filtroStatus ? ' · ' + filtroStatus : ''}`
-        content = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+        content = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px">
           <div style="background:#f0fdfa;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px">Total Vendas</p><p style="font-size:24px;font-weight:700;color:#0f766e;margin:0">${sales.length}</p></div>
           <div style="background:#eff6ff;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px">Faturamento</p><p style="font-size:24px;font-weight:700;color:#1d4ed8;margin:0">${fR(total_rev)}</p></div>
-          <div style="background:#f0fdf4;padding:16px;border-radius:10px"><p style="color:#6b7280;font-size:11px;margin:0 0 6px">Lucro Total</p><p style="font-size:24px;font-weight:700;color:#16a34a;margin:0">${fR(total_prf)}</p></div>
         </div>
         <div class=\"table-wrap\"><table style=\"width:100%;border-collapse:collapse;font-size:12px\">
-          <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Ref</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Cliente</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Valor</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Lucro</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Pgto</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Status</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Data</th></tr>
-          ${sales.map((s) => { const p = (s as Record<string,Record<string,string>>).product; const cu = (s as Record<string,Record<string,string>>).customer; return `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-family:monospace;font-size:11px;color:#6b7280">${(s as Record<string,string>).reference}</td><td style="padding:8px">${p?.brand} ${p?.model}<br><small style="color:#9ca3af">${p?.color || ''}</small></td><td style="padding:8px;color:#6b7280">${cu?.name || '—'}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR((s as Record<string,number>).total_price)}</td><td style="padding:8px;text-align:right;color:#16a34a">${fR((s as Record<string,number>).profit_total || 0)}</td><td style="padding:8px;color:#6b7280;font-size:11px">${(s as Record<string,string>).channel || '—'}</td><td style="padding:8px"><span style="background:${(s as Record<string,string>).status === 'APROVADA' ? '#dcfce7' : '#fee2e2'};color:${(s as Record<string,string>).status === 'APROVADA' ? '#166534' : '#991b1b'};padding:2px 8px;border-radius:99px;font-size:10px">${(s as Record<string,string>).status}</span></td><td style="padding:8px;color:#6b7280;font-size:11px">${fD((s as Record<string,string>).created_at)}</td></tr>` }).join('')}
+          <tr style="background:#f8fafc"><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Ref</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Produto</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Cliente</th><th style="padding:9px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Valor</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Pgto</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Status</th><th style="padding:9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#64748b">Data</th></tr>
+          ${sales.map((s) => { const p = (s as Record<string,Record<string,string>>).product; const cu = (s as Record<string,Record<string,string>>).customer; return `<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:8px;font-family:monospace;font-size:11px;color:#6b7280">${(s as Record<string,string>).reference}</td><td style="padding:8px">${p?.brand} ${p?.model}<br><small style="color:#9ca3af">${p?.color || ''}</small></td><td style="padding:8px;color:#6b7280">${cu?.name || '—'}</td><td style="padding:8px;text-align:right;color:#1d4ed8;font-weight:600">${fR((s as Record<string,number>).total_price)}</td><td style="padding:8px;color:#6b7280;font-size:11px">${(s as Record<string,string>).channel || '—'}</td><td style="padding:8px"><span style="background:${(s as Record<string,string>).status === 'APROVADA' ? '#dcfce7' : '#fee2e2'};color:${(s as Record<string,string>).status === 'APROVADA' ? '#166534' : '#991b1b'};padding:2px 8px;border-radius:99px;font-size:10px">${(s as Record<string,string>).status}</span></td><td style="padding:8px;color:#6b7280;font-size:11px">${fD((s as Record<string,string>).created_at)}</td></tr>` }).join('')}
         </table>`
       }
 
@@ -176,11 +198,11 @@ export default function RelatoriosPage() {
         csv = ['Data;Tipo;Descrição;Valor;Forma', ...rows].join('\n')
         filename = `fluxo_caixa_${new Date().toISOString().split('T')[0]}.csv`
       } else {
-        let q = sb.from('sales').select('reference,total_price,profit_total,margin_percent,channel,status,created_at,product:products(brand,model,color),customer:customers(name,phone)').gte('created_at', ini).lte('created_at', fim)
+        let q = sb.from('sales').select('reference,total_price,channel,status,created_at,product:products(brand,model,color),customer:customers(name,phone)').gte('created_at', ini).lte('created_at', fim)
         if (filtroStatus) q = q.eq('status', filtroStatus as 'APROVADA' | 'REJEITADA' | 'CANCELADA')
         const { data } = await q.order('created_at', { ascending: false })
-        const rows = (data || []).map((s) => { const p = (s as Record<string,Record<string,string>>).product; const cu = (s as Record<string,Record<string,string>>).customer; return [(s as Record<string,string>).reference, p ? `${p.brand} ${p.model}` : '',p?.color||'',cu?.name||'',cu?.phone||'',(s as Record<string,number>).total_price,(s as Record<string,number>).profit_total||0,`${((s as Record<string,number>).margin_percent||0).toFixed(1)}%`,(s as Record<string,string>).channel,(s as Record<string,string>).status,fD((s as Record<string,string>).created_at)].join(';') })
-        csv = ['Ref;Produto;Cor;Cliente;Telefone;Valor;Lucro;Margem;Pgto;Status;Data', ...rows].join('\n')
+        const rows = (data || []).map((s) => { const p = (s as Record<string,Record<string,string>>).product; const cu = (s as Record<string,Record<string,string>>).customer; return [(s as Record<string,string>).reference, p ? `${p.brand} ${p.model}` : '',p?.color||'',cu?.name||'',cu?.phone||'',(s as Record<string,number>).total_price,(s as Record<string,string>).channel,(s as Record<string,string>).status,fD((s as Record<string,string>).created_at)].join(';') })
+        csv = ['Ref;Produto;Cor;Cliente;Telefone;Valor;Pgto;Status;Data', ...rows].join('\n')
         filename = `vendas_${new Date().toISOString().split('T')[0]}.csv`
       }
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv' })
@@ -293,10 +315,11 @@ export default function RelatoriosPage() {
             { id: 'pdf_lucro',     label: 'Lucro',     fn: () => gerarPDF('lucro')     },
             { id: 'pdf_comissoes', label: 'Comissões', fn: () => gerarPDF('comissoes') },
             { id: 'pdf_vendas',    label: 'Vendas',    fn: () => gerarPDF('vendas')    },
+            { id: 'pdf_ranking',   label: 'Top 5 Mais Vendidos', fn: () => gerarPDF('ranking') },
           ].map(r => (
             <button key={r.id} onClick={r.fn} disabled={loading === r.id} className="card" style={{ textAlign: 'left', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10, opacity: loading === r.id ? .6 : 1 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(59,130,246,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {loading === r.id ? <div className="spinner spinner-sm" /> : <FileText size={14} style={{ color: 'var(--accent)' }} />}
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: r.id === 'pdf_ranking' ? 'rgba(245,158,11,.1)' : 'rgba(59,130,246,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {loading === r.id ? <div className="spinner spinner-sm" /> : r.id === 'pdf_ranking' ? <Trophy size={14} style={{ color: 'var(--yellow)' }} /> : <FileText size={14} style={{ color: 'var(--accent)' }} />}
               </div>
               <p style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-1)' }}>{r.label}</p>
               <p style={{ fontSize: 11, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 3 }}><FileText size={10} />Ver relatório</p>
