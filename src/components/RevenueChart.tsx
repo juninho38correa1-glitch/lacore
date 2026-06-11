@@ -5,11 +5,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface Props {
   data: { labels: string[]; rev: number[]; prf: number[] }
+  showProfit?: boolean
 }
 
 const fmtK = (v: number) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v.toFixed(0)}`
 
-export function RevenueChart({ data }: Props) {
+export function RevenueChart({ data, showProfit = true }: Props) {
   const [colors, setColors] = useState({ accent: '#3B82F6', green: '#10B981', text3: '#9aa3b5', text4: '#5a6478' })
 
   useEffect(() => {
@@ -32,10 +33,10 @@ export function RevenueChart({ data }: Props) {
             <stop offset="5%" stopColor={colors.accent} stopOpacity={0.35} />
             <stop offset="95%" stopColor={colors.accent} stopOpacity={0} />
           </linearGradient>
-          <linearGradient id="gradLucro" x1="0" y1="0" x2="0" y2="1">
+          {showProfit && <linearGradient id="gradLucro" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={colors.green} stopOpacity={0.3} />
             <stop offset="95%" stopColor={colors.green} stopOpacity={0} />
-          </linearGradient>
+          </linearGradient>}
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.045)" vertical={false} />
         <XAxis dataKey="name" tick={{ fill: colors.text4, fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -50,9 +51,9 @@ export function RevenueChart({ data }: Props) {
         <Area type="monotone" dataKey="Faturamento" stroke={colors.accent} strokeWidth={2}
               fill="url(#gradFaturamento)" dot={{ r: 3, fill: colors.accent, strokeWidth: 0 }}
               activeDot={{ r: 5 }} animationDuration={600} />
-        <Area type="monotone" dataKey="Lucro" stroke={colors.green} strokeWidth={2}
+        {showProfit && <Area type="monotone" dataKey="Lucro" stroke={colors.green} strokeWidth={2}
               fill="url(#gradLucro)" dot={{ r: 3, fill: colors.green, strokeWidth: 0 }}
-              activeDot={{ r: 5 }} animationDuration={600} />
+              activeDot={{ r: 5 }} animationDuration={600} />}
       </AreaChart>
     </ResponsiveContainer>
   )

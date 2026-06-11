@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [vRank, setVRank]     = useState<{ id: string; name: string; p: number; c: number }[]>([])
   const [stale, setStale]     = useState<Record<string, unknown>[]>([])
   const [chartData, setChartData] = useState<{ labels: string[]; rev: number[]; prf: number[] }>({ labels: [], rev: [], prf: [] })
+  const [chartDataDaily, setChartDataDaily] = useState<{ labels: string[]; rev: number[]; prf: number[] }>({ labels: [], rev: [], prf: [] })
   const [extratoSales, setExtratoSales] = useState<Record<string, unknown>[]>([])
   const [extratoOpen, setExtratoOpen] = useState<'faturamento' | 'lucro' | null>(null)
   const [topProducts, setTopProducts] = useState<{ label: string; qtd: number }[]>([])
@@ -134,6 +135,16 @@ export default function DashboardPage() {
         prfArr.push(f.reduce((a, x) => a + ((x.profit_total as number) || 0), 0))
       }
       setChartData({ labels, rev: revArr, prf: prfArr })
+
+      // Chart faturamento diário do mês atual
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+      const dLabels: string[] = [], dRevArr: number[] = []
+      for (let d = 1; d <= daysInMonth; d++) {
+        dLabels.push(String(d))
+        dRevArr.push(thisMo.filter(x => new Date(x.created_at as string).getDate() === d)
+          .reduce((a, x) => a + ((x.total_price as number) || 0), 0))
+      }
+      setChartDataDaily({ labels: dLabels, rev: dRevArr, prf: [] })
 
       // Ranking vendedores
       const vends = (s4.data || []) as { id: string; name: string }[]
@@ -279,9 +290,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="chart-layout" style={{ marginBottom: 16 }}>
-        <div className="card">
-          <p style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-4)', marginBottom: 14 }}>Faturamento — Últimos 6 Meses</p>
-          <div style={{ height: 160 }}>{chartData.labels.length > 0 && <RevenueChart data={chartData} />}</div>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <p style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-4)', marginBottom: 14 }}>Faturamento — Últimos 6 Meses</p>
+            <div style={{ height: 140 }}>{chartData.labels.length > 0 && <RevenueChart data={chartData} />}</div>
+          </div>
+          <div style={{ borderTop: '1px solid var(--border-1)', paddingTop: 14 }}>
+            <p style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-4)', marginBottom: 14 }}>Faturamento — Mensal (por dia)</p>
+            <div style={{ height: 140 }}>{chartDataDaily.labels.length > 0 && <RevenueChart data={chartDataDaily} showProfit={false} />}</div>
+          </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="card" style={{ flex: 1 }}>
