@@ -7,6 +7,7 @@ import { sb, fR, fD, fP, dI, ini } from '@/lib/supabase'
 import { TrendingUp, TrendingDown, Package, ShoppingCart, DollarSign, BarChart2, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { SkeletonCard, SkeletonRow } from '@/components/ui/Skeleton'
 import { RevenueChart } from '@/components/RevenueChart'
+import { Modal } from '@/components/ui/Modal'
 
 export default function DashboardPage() {
   const { user, isAdmin } = useAuth()
@@ -25,6 +26,8 @@ export default function DashboardPage() {
   const [vRank, setVRank]     = useState<{ id: string; name: string; p: number; c: number }[]>([])
   const [stale, setStale]     = useState<Record<string, unknown>[]>([])
   const [chartData, setChartData] = useState<{ labels: string[]; rev: number[]; prf: number[] }>({ labels: [], rev: [], prf: [] })
+  const [extratoSales, setExtratoSales] = useState<Record<string, unknown>[]>([])
+  const [extratoOpen, setExtratoOpen] = useState<'faturamento' | 'lucro' | null>(null)
 
   // Vendedor stats
   const [vRev, setVRev]       = useState(0)
@@ -49,13 +52,13 @@ export default function DashboardPage() {
       const lsom = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
       const [s1, s2, s3, s4] = await Promise.all([
-        sb.from('sales').select('total_price,profit_total,margin_percent,created_at').eq('status', 'APROVADA'),
+        sb.from('sales').select('id,reference,total_price,profit_total,margin_percent,created_at,customer:customers(name,city,state),product:products(brand,model,color)').eq('status', 'APROVADA'),
         sb.from('products').select('id,date_added,brand,model').eq('status', 'ATIVO'),
         sb.from('sales').select('id,reference,total_price,profit_total,created_at,product:products(brand,model)').eq('status', 'APROVADA').order('created_at', { ascending: false }).limit(7),
         sb.from('users').select('id,name').eq('status', 'ATIVO'), // todos os usuários ativos
       ])
 
-      const allS: Record<string, number | string>[] = (s1.data || []) as Record<string, number | string>[]
+      const allS: Record<string, unknown>[] = (s1.data || []) as Record<string, unknown>[]
       const prods: Record<string, string>[] = (s2.data || []) as Record<string, string>[]
 
       const thisMo = allS.filter(s => new Date(s.created_at as string) >= som)
@@ -69,6 +72,7 @@ export default function DashboardPage() {
       setLrev(lastMo.reduce((a, x) => a + ((x.total_price as number) || 0), 0))
       setLprf(lastMo.reduce((a, x) => a + ((x.profit_total as number) || 0), 0))
       setRecent((s3.data || []) as Record<string, unknown>[])
+      setExtratoSales([...thisMo].sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()))
       setStale(prods.filter(p => dI(p.date_added || '') >= 15) as Record<string, unknown>[])
 
       // Buscar a receber de parcelamentos
@@ -210,20 +214,20 @@ export default function DashboardPage() {
 
       <div className="grid-kpi" style={{ marginBottom: 20 }}>
         {[
-          { l: 'Faturamento',   v: fR(rev),        c: 'var(--accent)',  Icon: DollarSign,   d: delta(rev,  lrev), href: '/dashboard/vendas' },
-          { l: 'Lucro',         v: fR(prf),        c: 'var(--green)',   Icon: TrendingUp,   d: delta(prf,  lprf), href: '/dashboard/vendas' },
+          { l: 'Faturamento',   v: fR(rev),        c: 'var(--accent)',  Icon: DollarSign,   d: delta(rev,  lrev), onClick: () => setExtratoOpen('faturamento') },
+          { l: 'Lucro',         v: fR(prf),        c: 'var(--green)',   Icon: TrendingUp,   d: delta(prf,  lprf), onClick: () => setExtratoOpen('lucro') },
           { l: 'Margem Média',  v: fP(mg),         c: 'var(--yellow)',  Icon: BarChart2,    d: null },
           { l: 'Vendas',        v: salesCount,      c: 'var(--purple)',  Icon: ShoppingCart, d: null, href: '/dashboard/vendas' },
           { l: 'Em Estoque',    v: stockCount,      c: 'var(--accent)',  Icon: Package,      d: null, href: '/dashboard/estoque' },
         { l: 'A Receber',      v: fR(aReceber),    c: 'var(--yellow)',  Icon: DollarSign,   d: null, href: '/dashboard/fluxo-caixa?tab=areceber' },
         { l: 'Parc. Vencidas', v: fR(vencidosParc), c: vencidosParc > 0 ? 'var(--red)' : 'var(--text-3)', Icon: BarChart2, d: null, href: '/dashboard/fluxo-caixa?tab=areceber' },
-        ].map(({ l, v, c, Icon, d, href }) => (
-          <div key={l} onClick={() => href && router.push(href)}
-               role={href ? 'button' : undefined}
-               tabIndex={href ? 0 : undefined}
-               onKeyDown={href ? (e) => e.key === 'Enter' && router.push(href) : undefined}
-               className={`stat-card stat-pop card-hover card-glow ${href ? 'clickable' : ''} ${l === "Faturamento" ? "stat-card-accent" : l === "Lucro" ? "stat-card-green" : l === "Margem Média" ? "stat-card-yellow" : ""}`}
-               style={{ cursor: href ? "pointer" : "default" }}>
+        ].map(({ l, v, c, Icon, d, href, onClick }) => (
+          <div key={l} onClick={() => onClick ? onClick() : href && router.push(href)}
+               role={(href || onClick) ? 'button' : undefined}
+               tabIndex={(href || onClick) ? 0 : undefined}
+               onKeyDown={(href || onClick) ? (e) => { if (e.key === 'Enter') { onClick ? onClick() : href && router.push(href) } } : undefined}
+               className={`stat-card stat-pop card-hover card-glow ${(href || onClick) ? 'clickable' : ''} ${l === "Faturamento" ? "stat-card-accent" : l === "Lucro" ? "stat-card-green" : l === "Margem Média" ? "stat-card-yellow" : ""}`}
+               style={{ cursor: (href || onClick) ? "pointer" : "default" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
               <p className="stat-label">{l}</p>
               <Icon size={13} style={{ color: 'var(--text-4)' }} />
@@ -302,6 +306,57 @@ export default function DashboardPage() {
           </tbody>
         </table>
       </div>
+
+      <Modal
+        open={extratoOpen !== null}
+        onClose={() => setExtratoOpen(null)}
+        title={extratoOpen === 'faturamento' ? 'Extrato de Faturamento' : 'Extrato de Lucro'}
+        size="lg"
+      >
+        <div style={{ padding: '14px 18px' }}>
+          <p style={{ fontSize: 11.5, color: 'var(--text-4)', marginBottom: 12 }}>
+            {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })} · {extratoSales.length} venda{extratoSales.length !== 1 ? 's' : ''}
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Cidade</th>
+                <th>Produto</th>
+                <th>{extratoOpen === 'lucro' ? 'Lucro' : 'Valor'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {extratoSales.map((s, i) => {
+                const cust = s.customer as Record<string, string> | null
+                const prod = s.product as Record<string, string> | null
+                const valor = extratoOpen === 'lucro' ? Number(s.profit_total) || 0 : Number(s.total_price) || 0
+                return (
+                  <tr key={i}>
+                    <td style={{ color: 'var(--text-4)', fontSize: 12 }}>{fD(String(s.created_at || ''))}</td>
+                    <td style={{ fontWeight: 500 }}>{cust?.name || '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>{cust?.city ? `${cust.city}${cust.state ? `/${cust.state}` : ''}` : '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>{prod ? `${prod.brand} ${prod.model}` : '—'}</td>
+                    <td className="mono" style={{ fontWeight: 600, color: extratoOpen === 'lucro' ? 'var(--green)' : 'var(--accent)' }}>{fR(valor)}</td>
+                  </tr>
+                )
+              })}
+              {!extratoSales.length && <tr><td colSpan={5}><div className="empty"><p className="empty-title">Nenhuma venda este mês</p></div></td></tr>}
+            </tbody>
+            {extratoSales.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={4} style={{ fontWeight: 600, color: 'var(--text-2)' }}>Total</td>
+                  <td className="mono" style={{ fontWeight: 700, color: extratoOpen === 'lucro' ? 'var(--green)' : 'var(--accent)' }}>
+                    {fR(extratoOpen === 'lucro' ? prf : rev)}
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </Modal>
     </div>
   )
 }
