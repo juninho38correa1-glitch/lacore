@@ -76,7 +76,7 @@ export default function DashboardPage() {
       const [s1, s2, s3, s4] = await Promise.all([
         sb.from('sales').select('id,reference,total_price,profit_total,created_at,notes,customer:customers(name,city,state),product:products(brand,model,color)').eq('status', 'APROVADA'),
         sb.from('products').select('id,date_added,brand,model').eq('status', 'ATIVO'),
-        sb.from('sales').select('id,reference,total_price,profit_total,created_at,product:products(brand,model)').eq('status', 'APROVADA').order('created_at', { ascending: false }).limit(7),
+        sb.from('sales').select('id,reference,total_price,created_at,product:products(brand,model)').eq('status', 'APROVADA').order('created_at', { ascending: false }).limit(7),
         sb.from('users').select('id,name').eq('status', 'ATIVO'), // todos os usuários ativos
       ])
 
@@ -343,7 +343,7 @@ export default function DashboardPage() {
           <button onClick={() => router.push('/dashboard/vendas')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font)', display: 'flex', alignItems: 'center', gap: 3 }}>Ver todas <ArrowUpRight size={11} /></button>
         </div>
         <table>
-          <thead><tr><th>Ref</th><th>Produto</th><th>Valor</th><th>Lucro</th><th>Status</th><th>Data</th></tr></thead>
+          <thead><tr><th>Ref</th><th>Produto</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead>
           <tbody>
             {recent.map((s, i) => {
               const prod = s.product as Record<string, string> | null
@@ -353,13 +353,12 @@ export default function DashboardPage() {
                   <td className="mono" style={{ color: 'var(--text-4)', fontSize: 12 }}>{String(s.reference || '—')}</td>
                   <td style={{ fontWeight: 500 }}>{prod?.brand} {prod?.model}</td>
                   <td className="mono" style={{ fontWeight: 600, color: 'var(--accent)' }}>{fR(Number(s.total_price) || 0)}</td>
-                  <td className="hide-mobile mono" style={{ color: 'var(--green)' }}>{fR(Number(s.profit_total) || 0)}</td>
                   <td><span className={`badge badge-${status === 'APROVADA' ? 'green' : status === 'CANCELADA' ? 'red' : 'gray'}`}>{status}</span></td>
                   <td style={{ color: 'var(--text-4)', fontSize: 12 }}>{fD(String(s.created_at || ''))}</td>
                 </tr>
               )
             })}
-            {!recent.length && <tr><td colSpan={6}><div className="empty"><p className="empty-title">Nenhuma venda ainda</p></div></td></tr>}
+            {!recent.length && <tr><td colSpan={5}><div className="empty"><p className="empty-title">Nenhuma venda ainda</p></div></td></tr>}
           </tbody>
         </table>
       </div>
