@@ -41,8 +41,8 @@ export default function VendasTable() {
   const load = async () => {
     setLoading(true)
     const q = isAdmin()
-      ? sb.from('sales').select('id,reference,product_id,vendor_id,customer_id,total_price,cost_brl_unit,profit_total,margin_percent,channel,notes,status,created_at,product:products(brand,model,color),customer:customers(name,phone)')
-      : sb.from('sales').select('id,reference,product_id,vendor_id,customer_id,total_price,cost_brl_unit,profit_total,margin_percent,channel,notes,status,created_at,product:products(brand,model,color),customer:customers(name)').eq('vendor_id', user!.id)
+      ? sb.from('sales').select('id,reference,product_id,vendor_id,customer_id,total_price,cost_brl_unit,profit_total,margin_percent,channel,notes,status,created_at,product:products(brand,model,color),customer:customers(name,phone,city,state)')
+      : sb.from('sales').select('id,reference,product_id,vendor_id,customer_id,total_price,cost_brl_unit,profit_total,margin_percent,channel,notes,status,created_at,product:products(brand,model,color),customer:customers(name,city,state)').eq('vendor_id', user!.id)
     const { data, error } = await q.order('created_at', { ascending: false }).limit(200)
     if (error) console.error('Erro vendas:', error)
     setVendas((data || []) as Sale[])
@@ -650,7 +650,12 @@ export default function VendasTable() {
                       {prod?.brand} {prod?.model}
                       {prod?.color && <span style={{ color: 'var(--text-4)', fontSize: 11, marginLeft: 4 }}>{prod.color}</span>}
                     </td>
-                    {isAdmin() && <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>{cust?.name || '—'}</td>}
+                    {isAdmin() && (
+                      <td className="hide-mobile" style={{ color: 'var(--text-3)', fontSize: 12 }}>
+                        {cust?.name || '—'}
+                        {cust?.city && <span style={{ color: 'var(--text-4)', fontSize: 11, display: 'block' }}>{cust.city}{cust.state ? `/${cust.state}` : ''}</span>}
+                      </td>
+                    )}
                     <td className="mono" style={{ fontWeight: 600, color: 'var(--accent)' }}>{fR(v.total_price)}</td>
                     {isAdmin() && <td className="hide-mobile mono" style={{ color: 'var(--green)' }}>{fR(v.profit_total || 0)}</td>}
                     <td><span className={`badge badge-${v.status === 'APROVADA' ? 'green' : v.status === 'CANCELADA' ? 'red' : 'gray'}`}>{v.status}</span></td>
@@ -698,6 +703,7 @@ export default function VendasTable() {
                   <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-4)', marginBottom: 6 }}>Cliente</p>
                   <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{cust.name}</p>
                   {cust.phone && <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{cust.phone}</p>}
+                  {cust.city && <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{cust.city}{cust.state ? `/${cust.state}` : ''}</p>}
                 </div>
               )}
 
