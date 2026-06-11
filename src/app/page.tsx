@@ -82,83 +82,6 @@ function Navigation({ onEntrar }: { onEntrar: () => void }) {
 }
 
 /* ─── Stats preview card ─────────────────────────────────── */
-function DashboardPreview() {
-  const stats = [
-    { label: 'Saldo em Caixa', value: 'R$ 12.843', icon: TrendingUp, color: '#22c55e', bg: 'rgba(34,197,94,.1)' },
-    { label: 'Vendas no Mês', value: '47 vendas', icon: ShoppingBag, color: 'var(--accent)', bg: 'rgba(59,130,246,.1)' },
-    { label: 'A Receber', value: 'R$ 3.210', icon: CreditCard, color: '#f59e0b', bg: 'rgba(245,158,11,.1)' },
-    { label: 'Itens em Estoque', value: '136 itens', icon: Package, color: '#a78bfa', bg: 'rgba(167,139,250,.1)' },
-  ]
-  const vendas = [
-    { ref: 'VDA-MQ038BUG', produto: 'Xiaomi Poco C85', valor: 'R$ 1.119', status: 'APROVADA', cor: '#22c55e' },
-    { ref: 'VDA-MPYOPMPY', produto: 'Redmi A5 Preto', valor: 'R$ 741', status: 'APROVADA', cor: '#22c55e' },
-    { ref: 'VDA-KPL77FXQ', produto: 'Poco C85 Preto', valor: 'R$ 989', status: 'APROVADA', cor: '#22c55e' },
-  ]
-
-  return (
-    <div style={{
-      background: 'rgba(18,18,23,.9)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 20,
-      overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04)',
-    }}>
-      {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,.06)', background: 'rgba(255,255,255,.02)' }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b' }} />
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
-        <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <LogoIcon size={16} />
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,.3)', fontFamily: 'var(--font-head)' }}>Lacore ERP — Dashboard</span>
-        </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.2)', borderRadius: 99, padding: '2px 8px' }}>
-          <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e' }} />
-          <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 600 }}>Ao vivo</span>
-        </div>
-      </div>
-
-      {/* KPI grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, background: 'rgba(255,255,255,.04)' }}>
-        {stats.map((s) => (
-          <div key={s.label} style={{ padding: '14px 16px', background: 'rgba(12,12,16,.95)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <s.icon size={15} style={{ color: s.color }} />
-            </div>
-            <div>
-              <p style={{ fontSize: 9.5, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 2 }}>{s.label}</p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: s.color, fontFamily: 'var(--font-head)' }}>{s.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Vendas recentes */}
-      <div style={{ padding: '14px 16px 6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-          <BarChart3 size={12} style={{ color: 'rgba(255,255,255,.3)' }} />
-          <span style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(255,255,255,.3)' }}>Vendas recentes</span>
-        </div>
-        {vendas.map(v => (
-          <div key={v.ref} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-            <div>
-              <p style={{ fontSize: 11.5, fontWeight: 500, color: 'rgba(255,255,255,.75)' }}>{v.produto}</p>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,.25)', marginTop: 1 }}>{v.ref}</p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>{v.valor}</span>
-              <span style={{ fontSize: 9.5, fontWeight: 600, color: v.cor, background: `${v.cor}18`, border: `1px solid ${v.cor}33`, padding: '2px 7px', borderRadius: 99 }}>{v.status}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Notification row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'rgba(59,130,246,.06)', borderTop: '1px solid rgba(59,130,246,.12)' }}>
-        <Bell size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-        <p style={{ fontSize: 10.5, color: 'rgba(59,130,246,.8)' }}>1 parcela vence hoje · <strong style={{ color: 'var(--accent)' }}>Cobrar via WhatsApp</strong></p>
-      </div>
-    </div>
-  )
-}
-
 /* ─── Features ──────────────────────────────────────────── */
 const features = [
   { icon: ShoppingBag, title: 'Gestão de Vendas', desc: 'Registro completo com comprovante PDF profissional, multi-produto e histórico por cliente.', color: '#3b82f6' },
@@ -260,11 +183,6 @@ export default function LoginPage() {
             </a>
           </div>
 
-          {/* Dashboard preview */}
-          <div style={{ maxWidth: 720, margin: '0 auto',
-            opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all .7s ease .28s' }}>
-            <DashboardPreview />
-          </div>
         </div>
       </section>
 
