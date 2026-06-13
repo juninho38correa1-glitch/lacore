@@ -121,6 +121,29 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
   background:rgba(9,9,11,.9);backdrop-filter:blur(14px);
   border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:8px 12px;
 }
+.oferta-corner{
+  position:absolute;top:0;left:0;width:90px;height:90px;overflow:hidden;pointer-events:none;z-index:3;
+}
+.oferta-corner span{
+  position:absolute;top:16px;left:-28px;width:130px;text-align:center;
+  background:linear-gradient(135deg,#f97316,#ef4444);
+  color:#fff;font-size:10px;font-weight:800;letter-spacing:.1em;
+  padding:4px 0;transform:rotate(-45deg);
+  box-shadow:0 4px 12px rgba(239,68,68,.45);
+  animation:pulse-oferta 2s ease-in-out infinite;
+}
+@keyframes pulse-oferta{
+  0%,100%{box-shadow:0 4px 12px rgba(239,68,68,.45)}
+  50%{box-shadow:0 4px 20px rgba(249,115,22,.75)}
+}
+.promo-old-price{
+  font-size:12px;color:var(--t4);text-decoration:line-through;margin-bottom:1px;
+}
+.promo-price{
+  font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1;
+  background:linear-gradient(135deg,#f97316,#ef4444);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
 
 /* ─── Filtros spring (06) ───────────────── */
 .fpill{
@@ -576,6 +599,7 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
     </p>
 
     <!-- Preço -->
+    <p id="m-preco-old" style="font-size:14px;color:var(--t4);text-decoration:line-through;margin-bottom:2px;display:none"></p>
     <p id="m-preco" class="sora" style="font-size:30px;font-weight:900;color:var(--t1);letter-spacing:-.03em;margin-bottom:3px"></p>
     <p id="m-parc-prev" style="font-size:12px;color:var(--t3);margin-bottom:18px"></p>
 
@@ -709,6 +733,16 @@ function calcParc(preco, n) {
   const t   = TAXAS[n] / 100;
   const tot = preco * (1 + t) * (1 + IOF / 100);
   return { total:tot, parc:tot/n };
+}
+
+/* ── Preço efetivo (considera promoção ativa) ── */
+function precoEfetivo(p) {
+  const preco = p?.price_current;
+  const promo = p?.price_promo;
+  return (promo && preco && promo < preco) ? promo : preco;
+}
+function emPromo(p) {
+  return !!(p?.price_promo && p?.price_current && p.price_promo < p.price_current);
 }
 
 /* ── Formatadores ── */
@@ -986,8 +1020,10 @@ function renderGrid() {
     const p    = g.rep;                                          // produto representante
     const foto = (p.photos||[]).sort((a,b)=>a.order-b.order)[0]?.url || '';
     const fotos = (p.photos||[]).sort((a,b)=>a.order-b.order).map(f=>f.url);
-    const preco  = p.price_current;
-    const c12    = preco ? calcParc(preco, 12) : null;
+    const preco     = p.price_current;
+    const promo     = !g.esgotado && emPromo(p);
+    const precoFinal = promo ? p.price_promo : preco;
+    const c12       = precoFinal ? calcParc(precoFinal, 12) : null;
 
     const cardId = encodeURIComponent(g.key); // usa a chave do grupo como ID único
 
@@ -1016,6 +1052,7 @@ function renderGrid() {
              </div>`
         }
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(9,9,11,.3) 0%,transparent 60%)" aria-hidden="true"></div>
+        ${promo ? `<div class="oferta-corner"><span>OFERTA</span></div>` : ''}
         ${p.catalog_highlight && !p.catalog_label ? `<div style="position:absolute;top:11px;right:11px;background:rgba(99,102,241,.85);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.05em">DESTAQUE</div>` : ''}
         ${p.catalog_label    ? `<div class="label-badge">${p.catalog_label}</div>` : ''}
         ${!g.esgotado && g.qtd > 0 && g.qtd <= 2
@@ -1059,7 +1096,8 @@ function renderGrid() {
         </div>` : ''}
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:6px">
           <div>
-            <p class="sora" style="font-size:19px;font-weight:800;color:${g.esgotado?'var(--t3)':'var(--t1)'};letter-spacing:-.02em;line-height:1">${preco ? fmt(preco) : 'Consulte'}</p>
+            ${promo ? `<p class="promo-old-price">${fmt(preco)}</p>` : ''}
+            <p class="sora ${promo ? 'promo-price' : ''}" style="font-size:19px;font-weight:800;${promo ? '' : `color:${g.esgotado?'var(--t3)':'var(--t1)'};`}letter-spacing:-.02em;line-height:1">${precoFinal ? fmt(precoFinal) : (preco ? fmt(preco) : 'Consulte')}</p>
             ${c12 && !g.esgotado ? `<p style="font-size:10px;color:var(--t4);margin-top:2px">12× ${fmt(c12.parc)}</p>` : ''}
           </div>
           <button onclick="event.stopPropagation();abrirModalPorChave('${cardId}')"
@@ -1079,7 +1117,7 @@ function renderGrid() {
    COMPARADOR DE MODELOS
 ════════════════════════════════════════ */
 const CAMPOS_COMPARAR = [
-  ['Preço',            (p,g) => p.price_current ? fmt(p.price_current) : 'Consulte'],
+  ['Preço',            (p,g) => precoEfetivo(p) ? fmt(precoEfetivo(p)) : 'Consulte'],
   ['Condição',         (p)   => p.condition || 'Seminovo'],
   ['Armazenamento',    (p,g) => g.storage || '—'],
   ['Tela',             (p)   => p.screen || '—'],
@@ -1345,9 +1383,21 @@ function preencherModal() {
 
   /* preço */
   const preco = p.price_current;
-  document.getElementById('m-preco').textContent = preco ? fmt(preco) : 'Consulte o preço';
-  if (preco) {
-    const c12 = calcParc(preco, 12);
+  const promo = !g?.esgotado && emPromo(p);
+  const precoFinal = precoEfetivo(p);
+  const precoEl = document.getElementById('m-preco');
+  const oldEl   = document.getElementById('m-preco-old');
+  precoEl.textContent = precoFinal ? fmt(precoFinal) : 'Consulte o preço';
+  if (promo) {
+    oldEl.textContent = fmt(preco);
+    oldEl.style.display = 'block';
+    precoEl.style.color = '#f97316';
+  } else {
+    oldEl.style.display = 'none';
+    precoEl.style.color = 'var(--t1)';
+  }
+  if (precoFinal) {
+    const c12 = calcParc(precoFinal, 12);
     document.getElementById('m-parc-prev').textContent  = `ou ${fmt(c12.parc)}/mês em até 12× com juros`;
     document.getElementById('m-parc-prev').style.display = 'block';
     document.getElementById('sim-wrap').style.display    = 'block';
@@ -1436,7 +1486,8 @@ function toggleSim() {
     renderSimulador();
   }
   const p = modalProd;
-  const c12 = p?.price_current ? calcParc(p.price_current, 12) : null;
+  const pf = precoEfetivo(p);
+  const c12 = pf ? calcParc(pf, 12) : null;
   document.getElementById('sim-sub').textContent = simAberto
     ? 'Fechar simulador'
     : (c12 ? `até 12× de ${fmt(c12.parc)}` : 'InfinityPay · até 12×');
@@ -1444,12 +1495,12 @@ function toggleSim() {
 
 function getEntrada() {
   const raw = (document.getElementById('ent-input').value || '').replace(',','.').replace(/[^0-9.]/g,'');
-  return Math.min(Math.max(parseFloat(raw)||0, 0), modalProd?.price_current||0);
+  return Math.min(Math.max(parseFloat(raw)||0, 0), precoEfetivo(modalProd)||0);
 }
 
 function onEntrada() {
   const v     = getEntrada();
-  const preco = modalProd?.price_current || 0;
+  const preco = precoEfetivo(modalProd) || 0;
   const clr   = document.getElementById('ent-clear');
   const info  = document.getElementById('ent-info');
   clr.style.display  = v > 0 ? 'flex'  : 'none';
@@ -1469,7 +1520,7 @@ function renderSimulador() {
   if (!simAberto) return;
   const p    = modalProd;
   const ent  = getEntrada();
-  const base = (p?.price_current || 0) - ent;
+  const base = (precoEfetivo(p) || 0) - ent;
   const c    = calcParc(base, parcSel);
 
   /* grade */
@@ -1622,7 +1673,7 @@ function abrirWA(prod) {
   let msg;
   if (prod && typeof prod === 'object') {
     const p   = prod;
-    const preco = p.price_current;
+    const preco = precoEfetivo(p);
     const c12 = preco ? calcParc(preco, 12) : null;
     msg = `Olá! Vi o *${p.brand} ${p.model}${p.storage?' '+p.storage:''}${p.color?' — '+p.color:''}* no catálogo da LacoreStore`
         + (preco ? ` por *${fmt(preco)}* à vista (ou ${fmt(c12.parc)}/mês em até 12×)` : '')

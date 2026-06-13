@@ -26,6 +26,7 @@ export interface Product {
   cost_brl_unit?: number
   price_current?: number
   price_min?: number
+  price_promo?: number | null
   shipment_id?: string
   date_added?: string
   processor?: string

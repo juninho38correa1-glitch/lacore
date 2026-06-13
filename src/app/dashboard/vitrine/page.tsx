@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Search, ExternalLink, Eye, EyeOff, Star, Smartphone } from 'lucide-react'
+import { Search, ExternalLink, Eye, EyeOff, Star, Smartphone, Tag, X } from 'lucide-react'
 import { sb, fR } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
+import { Modal } from '@/components/ui/Modal'
 import { useRouter } from 'next/navigation'
 import type { Product } from '@/lib/types'
 
@@ -14,6 +15,9 @@ export default function VitrineAdminPage() {
   const [prods, setProds] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [promoTarget, setPromoTarget] = useState<{ key: string; brand: string; model: string; storage: string; price: number; allIds: string[] } | null>(null)
+  const [promoValue, setPromoValue] = useState('')
+  const [savingPromo, setSavingPromo] = useState(false)
 
   useEffect(() => { if (!isAdmin()) router.push('/dashboard') }, [isAdmin])
 
@@ -40,6 +44,25 @@ export default function VitrineAdminPage() {
     await sb.from('products').update({ [field]: val }).eq('id', id)
     setProds(p => p.map(x => x.id === id ? { ...x, [field]: val } : x))
     toast(field === 'catalog_visible' ? (val ? 'Visível no catálogo' : 'Oculto do catálogo') : (val ? 'Destaque ativado' : 'Destaque removido'), 'success')
+  }
+
+  const savePromo = async () => {
+    if (!promoTarget) return
+    const val = parseFloat(promoValue.replace(/\./g, '').replace(',', '.'))
+    if (!val || val <= 0) { toast('Informe um valor válido', 'error'); return }
+    if (val >= promoTarget.price) { toast('A promoção deve ser menor que o preço normal', 'error'); return }
+    setSavingPromo(true)
+    await sb.from('products').update({ price_promo: val }).in('id', promoTarget.allIds)
+    setProds(p => p.map(x => promoTarget.allIds.includes(x.id) ? { ...x, price_promo: val } : x))
+    setSavingPromo(false)
+    setPromoTarget(null)
+    toast('Promoção aplicada!', 'success')
+  }
+
+  const removePromo = async (allIds: string[]) => {
+    await sb.from('products').update({ price_promo: null }).in('id', allIds)
+    setProds(p => p.map(x => allIds.includes(x.id) ? { ...x, price_promo: null } : x))
+    toast('Promoção removida', 'success')
   }
 
   // Agrupar por brand+model+storage
@@ -74,12 +97,13 @@ export default function VitrineAdminPage() {
           <table>
             <thead><tr>
               <th>Produto</th><th>Qtd</th><th>Preço</th>
+              <th>Promoção</th>
               <th className="text-center">Visível</th>
               <th className="text-center">Destaque</th>
               <th>Config</th>
             </tr></thead>
             <tbody>
-              {!grupos.length && <tr><td colSpan={6} className="text-center py-10 text-gray-600">Nenhum produto</td></tr>}
+              {!grupos.length && <tr><td colSpan={7} className="text-center py-10 text-gray-600">Nenhum produto</td></tr>}
               {grupos.map(g => {
                 const rep = g.rep
                 const photo = (rep.photos || []).sort((a, b) => a.order - b.order)[0]
@@ -99,6 +123,23 @@ export default function VitrineAdminPage() {
                     </td>
                     <td className="text-gray-300">{g.items.length}</td>
                     <td className="font-mono text-cyan-300 text-sm">{fR(rep.price_current || 0)}</td>
+                    <td>
+                      {rep.price_promo ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-orange-400 font-semibold text-sm">{fR(rep.price_promo)}</span>
+                          <button onClick={() => removePromo(allIds)} title="Remover promoção" className="p-1 rounded-md text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                            <X size={13} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setPromoTarget({ key: g.key, brand: g.brand, model: g.model, storage: g.storage, price: rep.price_current || 0, allIds }); setPromoValue('') }}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-orange-300 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+                        >
+                          <Tag size={12} />Criar
+                        </button>
+                      )}
+                    </td>
                     <td className="text-center">
                       <button onClick={async () => { const newVal = !visible; for (const id of allIds) await sb.from('products').update({ catalog_visible: newVal }).eq('id', id); load(); toast(newVal ? 'Visível no catálogo' : 'Oculto do catálogo', 'success') }} className={`p-1.5 rounded-lg transition-colors ${visible ? 'text-green-400 hover:bg-green-500/15' : 'text-gray-600 hover:bg-white/8'}`}>
                         {visible ? <Eye size={15} /> : <EyeOff size={15} />}
@@ -119,6 +160,37 @@ export default function VitrineAdminPage() {
           </table>
         </div>
       )}
+      <Modal open={!!promoTarget} onClose={() => setPromoTarget(null)} title="Criar promoção" size="sm">
+        {promoTarget && (
+          <div className="p-4 space-y-3">
+            <div>
+              <p className="text-white font-semibold text-sm">{promoTarget.brand} {promoTarget.model}</p>
+              <p className="text-gray-500 text-xs">{promoTarget.storage}</p>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">Preço atual:</span>
+              <span className="text-gray-300 font-mono">{fR(promoTarget.price)}</span>
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Preço promocional (R$)</label>
+              <input
+                autoFocus
+                value={promoValue}
+                onChange={e => setPromoValue(e.target.value)}
+                placeholder="Ex: 1899,90"
+                className="w-full text-sm"
+                onKeyDown={e => { if (e.key === 'Enter') savePromo() }}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => setPromoTarget(null)} className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:bg-white/5 transition-colors">Cancelar</button>
+              <button disabled={savingPromo} onClick={savePromo} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 transition-colors">
+                {savingPromo ? 'Salvando...' : 'Aplicar promoção'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
