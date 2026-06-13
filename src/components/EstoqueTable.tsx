@@ -263,7 +263,7 @@ export default function EstoqueTable() {
 
       {/* View agrupado */}
       {view === 'agrupado' && (
-        <div className="card p-0 overflow-hidden">
+        <div className="card p-0 table-wrap">
           <table>
             <thead><tr>
               <th>Produto</th><th>Storage</th><th>Cond.</th><th>Qtd</th>
@@ -313,7 +313,7 @@ export default function EstoqueTable() {
 
       {/* View individual */}
       {view === 'individual' && (
-        <div className="card p-0 overflow-hidden">
+        <div className="card p-0 table-wrap">
           <table>
             <thead><tr>
               <th>Produto</th><th>Cor</th><th>IMEI</th><th>Status</th>
