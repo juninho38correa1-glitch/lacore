@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff, ImagePlus, Loader2, Store, ChevronDown } from 'lucide-react'
+import { Eye, EyeOff, Save, Trash2, CheckCircle, XCircle, Shield, Bell, BellOff, ImagePlus, Loader2, Store, ChevronDown, Type, Image as ImageIcon } from 'lucide-react'
 import { callFn, sb } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
@@ -14,6 +14,10 @@ export default function ConfiguracoesPage() {
   const logoRef = useRef<HTMLInputElement>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
+  const catalogLogoRef = useRef<HTMLInputElement>(null)
+  const [catalogLogoMode, setCatalogLogoMode] = useState<'image' | 'text'>('image')
+  const [catalogLogoUrl, setCatalogLogoUrl] = useState<string>('/logo-copa.png')
+  const [catalogLogoUploading, setCatalogLogoUploading] = useState(false)
   const [notifPerm, setNotifPerm] = useState<NotificationPermission>('default')
   const [openaiKey, setOpenaiKey] = useState('')
   const [manusKey, setManusKey] = useState('')
@@ -30,6 +34,15 @@ export default function ConfiguracoesPage() {
     if (typeof Notification !== 'undefined') setNotifPerm(Notification.permission)
     sb.from('system_config').select('value').eq('key', 'company_logo').single()
       .then(({ data }) => { if (data?.value) setLogoUrl(data.value) })
+    sb.from('system_config').select('value').eq('key', 'catalog_header_logo').single()
+      .then(({ data }) => {
+        if (!data?.value) return
+        try {
+          const cfg = JSON.parse(data.value)
+          if (cfg.mode) setCatalogLogoMode(cfg.mode)
+          if (cfg.url) setCatalogLogoUrl(cfg.url)
+        } catch {}
+      })
   }, [])
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +68,43 @@ export default function ConfiguracoesPage() {
     await sb.from('system_config').delete().eq('key', 'company_logo')
     setLogoUrl(null)
     toast('Logo restaurada para o padrão', 'info')
+  }
+
+  const saveCatalogLogoConfig = async (mode: 'image' | 'text', url: string) => {
+    await sb.from('system_config').upsert({ key: 'catalog_header_logo', value: JSON.stringify({ mode, url }), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+  }
+
+  const handleCatalogLogoModeChange = async (mode: 'image' | 'text') => {
+    setCatalogLogoMode(mode)
+    await saveCatalogLogoConfig(mode, catalogLogoUrl)
+    toast(mode === 'image' ? 'Header do catálogo: modo imagem' : 'Header do catálogo: modo texto (LACORE STORE)', 'success')
+  }
+
+  const handleCatalogLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return
+    setCatalogLogoUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const key = `catalog_header_logo.${ext}`
+      await sb.storage.from('avatars').remove([key])
+      const { error } = await sb.storage.from('avatars').upload(key, file, { upsert: true })
+      if (error) throw error
+      const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(key)
+      const urlWithBust = publicUrl + '?t=' + Date.now()
+      setCatalogLogoUrl(urlWithBust)
+      setCatalogLogoMode('image')
+      await saveCatalogLogoConfig('image', urlWithBust)
+      toast('Logo do catálogo atualizada com sucesso!', 'success')
+    } catch { toast('Erro ao fazer upload da imagem', 'error') }
+    finally { setCatalogLogoUploading(false); if (catalogLogoRef.current) catalogLogoRef.current.value = '' }
+  }
+
+  const handleCatalogLogoRestore = async () => {
+    if (!confirm('Restaurar logo padrão do catálogo (LACORE Copa)?')) return
+    await sb.from('system_config').delete().eq('key', 'catalog_header_logo')
+    setCatalogLogoMode('image')
+    setCatalogLogoUrl('/logo-copa.png')
+    toast('Header do catálogo restaurado para o padrão', 'info')
   }
 
   const requestNotifPermission = async () => {
@@ -191,6 +241,54 @@ export default function ConfiguracoesPage() {
             </div>
             <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
           </div>
+        </div>
+      </div>
+
+      {/* Logo do catálogo (header da loja pública) */}
+      <div className="card space-y-4">
+        <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Store size={15} className="text-cyan-400" />Logo do Catálogo (Header)</h2>
+        <p className="text-xs text-gray-400">Controla o que aparece ao lado do ícone "LC" no topo do catálogo público (/catalogo). Escolha entre exibir uma imagem/logo personalizada ou o texto "LACORE STORE".</p>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => handleCatalogLogoModeChange('image')}
+            className={`flex-1 text-xs px-3 py-2 rounded-lg flex items-center justify-center gap-2 border transition-colors ${catalogLogoMode === 'image' ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300' : 'border-white/10 text-gray-400 hover:text-white'}`}
+          >
+            <ImageIcon size={13} />Imagem
+          </button>
+          <button
+            onClick={() => handleCatalogLogoModeChange('text')}
+            className={`flex-1 text-xs px-3 py-2 rounded-lg flex items-center justify-center gap-2 border transition-colors ${catalogLogoMode === 'text' ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300' : 'border-white/10 text-gray-400 hover:text-white'}`}
+          >
+            <Type size={13} />Texto (LACORE STORE)
+          </button>
+        </div>
+
+        {catalogLogoMode === 'image' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ flexShrink: 0, height: 40, padding: '0 12px', borderRadius: 8, background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={catalogLogoUrl} alt="Logo do catálogo" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={() => catalogLogoRef.current?.click()} disabled={catalogLogoUploading} className="btn-primary text-xs px-3 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50">
+                  {catalogLogoUploading ? <Loader2 size={12} style={{ animation: 'spin .6s linear infinite' }} /> : <ImagePlus size={12} />}
+                  {catalogLogoUploading ? 'Enviando...' : 'Alterar imagem'}
+                </button>
+                <button onClick={handleCatalogLogoRestore} className="text-xs px-3 py-2 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors flex items-center gap-1.5">
+                  <Trash2 size={11} />Restaurar padrão
+                </button>
+              </div>
+              <input ref={catalogLogoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleCatalogLogoUpload} />
+            </div>
+          </div>
+        )}
+
+        <div className="text-[11px] text-gray-500 bg-white/3 border border-white/8 rounded-lg p-3 space-y-1">
+          <p className="font-semibold text-gray-400">Dica de tamanho ideal:</p>
+          <p>• PNG com fundo transparente</p>
+          <p>• Proporção larga, entre 5:1 e 6:1 (ex: 1536x254px)</p>
+          <p>• A imagem aparece com ~26px de altura no header, então use boa resolução para ficar nítida (altura mínima recomendada: 250px)</p>
         </div>
       </div>
 
