@@ -355,20 +355,20 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
 .hero-wrap::before{
   content:'';
   position:absolute; inset:0; z-index:0;
-  background-image:url('/hero-copa.png');
-  background-size:cover; background-position:center;
-  background-repeat:no-repeat;
-  filter:brightness(.45) saturate(1.2);
-  transform:scale(1.04);
+  background:
+    radial-gradient(ellipse 50% 70% at 105% -10%, rgba(0,156,59,.14), transparent 70%),
+    radial-gradient(ellipse 45% 65% at -5% 110%, rgba(255,223,0,.07), transparent 70%),
+    linear-gradient(135deg, rgba(0,39,118,.22) 0%, rgba(9,9,11,1) 55%);
 }
 .hero-wrap::after{
   content:'';
   position:absolute; inset:0; z-index:1;
-  background:linear-gradient(100deg, rgba(9,9,11,1) 0%, rgba(9,9,11,1) 38%, rgba(9,9,11,.6) 68%, rgba(9,9,11,.3) 100%);
+  background-image:url('/bola-copa.svg');
+  background-size:260px; background-repeat:no-repeat; background-position:right -70px top -70px;
+  opacity:.08; mix-blend-mode:screen;
 }
 @media (max-width:640px){
-  .hero-wrap::before{ background-position:center 60%; filter:brightness(.3) saturate(1.2); }
-  .hero-wrap::after{ background:linear-gradient(180deg, rgba(9,9,11,.82) 0%, rgba(9,9,11,.6) 35%, rgba(9,9,11,.97) 80%); }
+  .hero-wrap::after{ background-size:160px; background-position:right -40px top -30px; opacity:.06; }
 }
 .hero-glow{
   position:absolute; border-radius:50%; pointer-events:none; z-index:2;
@@ -509,8 +509,8 @@ body{font-family:'Inter',sans-serif;background:#09090b;color:#fafafa;min-height:
 
   <!-- Hero -->
   <div class="hero-wrap" style="margin-bottom:32px;padding:24px 24px 28px">
-    <div class="hero-glow" style="top:-160px;left:-100px;width:420px;height:420px;background:radial-gradient(circle,rgba(59,130,246,.18),transparent 70%)"></div>
-    <div class="hero-glow" style="bottom:-180px;right:-120px;width:480px;height:480px;background:radial-gradient(circle,rgba(168,85,247,.12),transparent 70%)"></div>
+    <div class="hero-glow" style="top:-160px;left:-100px;width:420px;height:420px;background:radial-gradient(circle,rgba(255,223,0,.10),transparent 70%)"></div>
+    <div class="hero-glow" style="bottom:-180px;right:-120px;width:480px;height:480px;background:radial-gradient(circle,rgba(0,156,59,.16),transparent 70%)"></div>
     <div class="hero-content" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px">
       <div>
         <p style="font-size:11px;color:var(--t4);font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Smartphones premium</p>
