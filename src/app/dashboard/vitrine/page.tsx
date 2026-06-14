@@ -93,7 +93,7 @@ export default function VitrineAdminPage() {
       </div>
       <div className="relative max-w-xs"><Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrar produtos..." className="pl-9 text-sm" /></div>
       {loading ? <div className="flex justify-center p-16"><div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" /></div> : (
-        <div className="card p-0 overflow-hidden">
+        <div className="table-wrap">
           <table>
             <thead><tr>
               <th>Produto</th><th>Qtd</th><th>Preço</th>
